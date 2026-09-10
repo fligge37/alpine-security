@@ -47,6 +47,15 @@ export const tour = pgTable('tour', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const otpCode = pgTable('otp_code', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  phoneNumber: text('phone_number').notNull(),
+  code: text('code').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const locationPing = pgTable('location_ping', {
   id: uuid('id').primaryKey().defaultRandom(),
   tourId: uuid('tour_id')
