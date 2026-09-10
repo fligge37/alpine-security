@@ -31,3 +31,5 @@ Neue, nicht-triviale Architekturentscheidungen als weiteres ADR unter `docs/adr/
 - [0001](docs/adr/0001-systemdesign-und-check-in-modell.md) – Systemdesign & Check-in-Modell statt Dauertracking
 - [0002](docs/adr/0002-datenbank-technologie.md) – Datenbank & Datenzugriffsschicht (Postgres+PostGIS, Flyway, Drizzle)
 - [0003](docs/adr/0003-region-zugriffsmodell-verifizierung.md) – Region (MVP: Oberallgäu), Pull- statt Push-Zugriffsmodell, manuelle Account-Verifizierung
+- [0004](docs/adr/0004-kein-automatischer-ueberfaellig-status.md) – Kein automatischer "überfällig"-Status; Tour endet nur durch explizite Nutzeraktion
+- [0005](docs/adr/0005-auth-handynummer-sms-verifizierung.md) – Nutzer-Auth über Handynummer mit SMS-Verifizierung statt E-Mail/Passwort
