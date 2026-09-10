@@ -2,7 +2,7 @@
 
 ## Projekt
 
-Sicherheits-App für Berg-/Trailtouren mit zwei Nutzergruppen: Wanderer/Trailläufer (Endnutzer-App) und Bergwacht-Mitarbeitende (Einsicht/Dashboard). Kernidee: Nutzer hinterlegen vor Tourstart Route und geplante Rückkehrzeit; bleibt eine Rückmeldung aus, markiert das System die Tour als überfällig, damit die Bergwacht letzten bekannten Standort und geplante Route einsehen kann. Details und Begründung siehe [docs/adr/0001-systemdesign-und-check-in-modell.md](docs/adr/0001-systemdesign-und-check-in-modell.md).
+Sicherheits-App für Berg-/Trailtouren mit zwei Nutzergruppen: Wanderer/Trailläufer (Endnutzer-App) und Bergwacht-Mitarbeitende (Einsicht/Dashboard). Kernidee: Nutzer aktivieren beim Losgehen ihren Standort, die App liefert fortlaufend Positions-Pings (kein hochgeladener Routenplan). Die Bergwacht bekommt dadurch kein automatisches Alarmsystem, sondern ein Nachschlagewerkzeug: bei einer Vermisstenmeldung oder Sichtung über den normalen Notruf-Weg kann sie nachsehen, ob die Person eingeloggt war und wo ihr letzter bekannter Standort ist. Details siehe [docs/adr/0001-systemdesign-und-check-in-modell.md](docs/adr/0001-systemdesign-und-check-in-modell.md) (Grundidee) und ADR 0003–0005 (aktueller Stand, weicht in Details von ADR 0001 ab).
 
 ## Tech-Stack
 
@@ -10,11 +10,11 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 
 - `apps/web` – Nutzer-PWA (React, Vite)
 - `apps/dashboard` – Bergwacht-Dashboard (React, Vite, Refine)
-- `apps/api` – Backend (Fastify, REST); Datenbank: PostgreSQL + PostGIS (Docker), Migrationen via Flyway, Query-Schicht via Drizzle (siehe ADR 0002)
+- `apps/api` – Backend (Fastify, REST); Datenbank: PostgreSQL + PostGIS (Docker), Migrationen via Flyway (`apps/api/db/migrations`), Query-Schicht via Drizzle (`apps/api/src/db`) (siehe ADR 0002)
 - `packages/shared-types` – gemeinsame TS-Typen zwischen den Apps
 - Gemeinsames Setup: `tsconfig.base.json`, ESLint Flat Config (`eslint.config.js`), Prettier
 
-Aktuell reine Grundgerüste ohne Fachlogik (Hello World / Health-Check).
+`web`/`dashboard` sind reine Grundgerüste ohne Fachlogik (Hello World). `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping` – siehe ADRs 0001–0005), aber noch keine fachlichen Endpoints, nur den Health-Check.
 
 ## Leitplanken
 

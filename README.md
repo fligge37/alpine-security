@@ -9,18 +9,21 @@ apps/
   web/          Nutzer-PWA (React + TypeScript, Vite)
   dashboard/    Bergwacht-Dashboard (React + TypeScript, Refine)
   api/          Backend (TypeScript, Fastify)
+    db/migrations/  Flyway-SQL-Migrationen (Schema-Quelle der Wahrheit)
+    src/db/          Drizzle-Schema + Client (typsichere Query-Schicht)
 packages/
   shared-types/ Gemeinsame TypeScript-Typen zwischen den Apps
 docs/
   adr/          Architecture Decision Records
 ```
 
-Dies ist aktuell ein reines Grundgerüst ohne Fachlogik: jede App liefert nur "Hello World" bzw. einen Health-Check.
+Web/Dashboard sind aktuell reine Grundgerüste ohne Fachlogik ("Hello World"). Die API hat bereits ein Datenmodell (siehe ADRs 0001–0005) und eine laufende Datenbank, aber noch keine Endpoints darauf – nur den Health-Check.
 
 ## Voraussetzungen
 
 - Node.js >= 20
 - [pnpm](https://pnpm.io/) via [Corepack](https://nodejs.org/api/corepack.html) (in Node enthalten)
+- [Docker](https://www.docker.com/) für die lokale Datenbank (Postgres + PostGIS)
 
 Corepack einmalig aktivieren:
 
@@ -36,6 +39,16 @@ pnpm wird dann automatisch in der im Root-`package.json` festgelegten Version ve
 pnpm install
 ```
 
+## Datenbank (für `apps/api`)
+
+```bash
+pnpm db:up       # startet Postgres+PostGIS in Docker (Port 5432)
+pnpm db:migrate  # wendet alle Flyway-Migrationen aus apps/api/db/migrations an
+pnpm db:down     # stoppt und entfernt die Container
+```
+
+`apps/api/.env.example` nach `.env` kopieren, bevor `pnpm dev:api` gestartet wird – dort steht die passende `DATABASE_URL` für die lokale Datenbank.
+
 ## Entwicklung
 
 Jede App einzeln starten:
@@ -43,7 +56,7 @@ Jede App einzeln starten:
 ```bash
 pnpm dev:web        # http://localhost:5180
 pnpm dev:dashboard  # http://localhost:5181
-pnpm dev:api        # http://localhost:3000 (Health-Check unter /health)
+pnpm dev:api        # http://localhost:3000 (Health-Check unter /health, Datenbank muss laufen)
 ```
 
 ## Weitere Skripte (im Root ausführbar)

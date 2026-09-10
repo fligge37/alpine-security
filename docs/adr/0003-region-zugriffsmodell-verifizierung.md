@@ -17,7 +17,7 @@ Die `region`-Entität aus ADR 0001 bleibt trotzdem als eigenständiges Datenmode
 
 Das heißt konkret: Die Bergwacht sucht aktiv (nach Name, Zeitraum, Ort/Gebiet), das System drängt sich nicht auf. Der "überfällig"-Status einer Tour bleibt als berechnetes Attribut bestehen und wird bei einer Suche angezeigt (z. B. "seit 3h ohne Rückmeldung"), löst aber selbst keine Benachrichtigung aus.
 
-**Konsequenz für den Tech-Stack:** Der in ADR 0001 skizzierte "Benachrichtigungsdienst (Push, SMS-Fallback)" für die *Bergwacht-Alarmierung* entfällt vorerst ersatzlos – kein Twilio/Push-Provider für diesen Zweck im MVP nötig. Push-Erinnerungen an den *Nutzer* selbst (z. B. "Bald überfällig – alles ok?") sind davon unberührt und bleiben eine separate, spätere Entscheidung.
+**Konsequenz für den Tech-Stack:** Der in ADR 0001 skizzierte "Benachrichtigungsdienst (Push, SMS-Fallback)" für die _Bergwacht-Alarmierung_ entfällt vorerst ersatzlos – kein Twilio/Push-Provider für diesen Zweck im MVP nötig. Push-Erinnerungen an den _Nutzer_ selbst (z. B. "Bald überfällig – alles ok?") sind davon unberührt und bleiben eine separate, spätere Entscheidung.
 
 Diese Entscheidung unterstreicht die "kein Ersatz für den Notruf"-Leitplanke zusätzlich auf technischer Ebene: Das System initiiert nichts selbstständig, es beantwortet nur Anfragen von Bergwacht-Mitarbeitenden, die bereits über einen anderen Kanal (Notruf, Sichtung) aktiv geworden sind.
 

@@ -2,7 +2,7 @@
 
 ## Kontext
 
-Klassisches E-Mail/Passwort passt nicht gut zum Zweck der App: Die Handynummer *ist* der eigentliche Wert (Erreichbarkeit im Ernstfall), nicht eine abstrakte Account-Identität. Eine unverifizierte oder falsch eingegebene Nummer würde das Sicherheitsversprechen der App aushebeln, ohne dass jemand es merkt. Gleichzeitig soll die Nummer nicht bei jeder Tour erneut eingegeben werden müssen – das erhöht Reibung und Tippfehler-Risiko genau an der Stelle, die am wichtigsten ist.
+Klassisches E-Mail/Passwort passt nicht gut zum Zweck der App: Die Handynummer _ist_ der eigentliche Wert (Erreichbarkeit im Ernstfall), nicht eine abstrakte Account-Identität. Eine unverifizierte oder falsch eingegebene Nummer würde das Sicherheitsversprechen der App aushebeln, ohne dass jemand es merkt. Gleichzeitig soll die Nummer nicht bei jeder Tour erneut eingegeben werden müssen – das erhöht Reibung und Tippfehler-Risiko genau an der Stelle, die am wichtigsten ist.
 
 ## Entscheidung
 
@@ -19,7 +19,7 @@ Klassisches E-Mail/Passwort passt nicht gut zum Zweck der App: Die Handynummer *
 
 ## Konsequenzen
 
-- Ein **SMS-Provider** (z. B. Twilio) wird für den OTP-Versand benötigt. Das ist kein Widerspruch zu ADR 0003 (dort wurde ein Benachrichtigungsprovider für die *Bergwacht-Alarmierung* verworfen) – hier geht es um einen anderen Zweck, die einmalige Verifizierung der Nutzer-Nummer. Betriebskosten/Komplexität eines SMS-Providers sind damit trotzdem wieder Teil des Systems, nur an anderer Stelle.
+- Ein **SMS-Provider** (z. B. Twilio) wird für den OTP-Versand benötigt. Das ist kein Widerspruch zu ADR 0003 (dort wurde ein Benachrichtigungsprovider für die _Bergwacht-Alarmierung_ verworfen) – hier geht es um einen anderen Zweck, die einmalige Verifizierung der Nutzer-Nummer. Betriebskosten/Komplexität eines SMS-Providers sind damit trotzdem wieder Teil des Systems, nur an anderer Stelle.
 - `user` benötigt zusätzlich zu den bisherigen Feldern: `phone_number` (unique), `phone_verified_at`, sowie eine Session-/Token-Verwaltung für den Folge-Login ohne erneute Eingabe.
 - Rate-Limiting/Missbrauchsschutz für den OTP-Versand (z. B. gegen SMS-Bombing) ist notwendig, aber nicht Teil des ersten Entwurfs – als Hinweis für die Implementierung festgehalten.
 
