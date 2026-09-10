@@ -44,6 +44,7 @@
 ```
 
 **Kernentitäten:**
+
 - `user` (Wanderer, mit Kontaktdaten, Notfallkontakt optional)
 - `rescue_org_member` (verifizierte Bergwacht-Accounts, an eine Region gebunden)
 - `tour` (geplante Route/Gebiet, Startzeit, geplante Rückkehrzeit, Status: geplant/aktiv/beendet/überfällig)
@@ -85,11 +86,13 @@ Die ganze App steht oder fällt damit, ob "letzte bekannte Position" tatsächlic
 Die App sammelt GPS-Punkte lokal (native Background-Location-API) im gewählten Intervall, speichert sie lokal (SQLite/IndexedDB) und sendet sie in Batches, sobald wieder Netz da ist (mit Retry/Backoff). Das Dashboard zeigt "letzte Position vor X Minuten" mit einem Alters-Indikator.
 
 **Vorteile**
+
 - Funktioniert im Grunde unabhängig davon, wie lückenhaft das Netz ist – Daten gehen nicht verloren, sie kommen nur verzögert an
 - Liefert einen tatsächlichen Bewegungspfad, nicht nur Einzelpunkte – wichtig für die Suche ("er ist zuletzt hier lang gegangen")
 - Entspricht dem, was Nutzer sich unter "Live-Tracking" vorstellen
 
 **Nachteile**
+
 - Dauerhafte Hintergrund-Standorterfassung ist auf iOS als PWA praktisch nicht zuverlässig umsetzbar (iOS killt Hintergrundprozesse von Web-Apps aggressiv) – das spricht mittelfristig für eine native App oder zumindest einen nativen Wrapper (z.B. Capacitor), was den Aufwand erhöht
 - Höherer Akkuverbrauch
 - Mehr Komplexität (Sync-Logik, Konfliktbehandlung, Speicherverwaltung auf dem Gerät)
@@ -100,12 +103,14 @@ Die App sammelt GPS-Punkte lokal (native Background-Location-API) im gewählten 
 Bei Tour-Start hinterlegt der Nutzer geplante Route/Gebiet und erwartete Rückkehrzeit. Statt eines kontinuierlichen Tracks sendet die App nur dann einen Standort, wenn ohnehin Netz verfügbar ist (opportunistisch, z.B. bei jedem App-Wechsel in den Vordergrund, oder zu wenigen festen Checkpoints). Bleibt eine erwartete Rückmeldung aus oder wird die Rückkehrzeit deutlich überschritten, markiert das System die Tour als "überfällig" und die Bergwacht sieht: letzter bekannter Punkt + geplante Route + Zeit seit letztem Lebenszeichen.
 
 **Vorteile**
+
 - Technisch deutlich robuster umsetzbar, auch als PWA – kein Kampf gegen OS-Hintergrundbeschränkungen nötig
 - Spürbar geringerer Akkuverbrauch
 - Weniger invasiv (kein Dauertracking) – einfacher zu kommunizieren und datenschutzfreundlicher, was auch die Akzeptanz bei einer Bergwacht als Pilotpartner erhöhen dürfte
 - Entspricht etablierter Bergsicherheits-Praxis ("Tourenplan hinterlegen, Rückkehrzeit melden") – Nutzer verstehen das Konzept sofort
 
 **Nachteile**
+
 - Kein durchgehender Bewegungspfad – wenn zwischen zwei Checkpoints etwas passiert, ist nur der letzte Punkt bekannt, nicht der genaue Ort des Vorfalls
 - Verlässt sich stärker auf Netz-Gelegenheiten statt auf ein festes Intervall
 - Fühlt sich für Nutzer evtl. weniger nach "Sicherheitsnetz" an als ein sichtbarer Live-Track
