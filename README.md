@@ -17,7 +17,7 @@ docs/
   adr/          Architecture Decision Records
 ```
 
-Web/Dashboard sind aktuell reine Grundgerüste ohne Fachlogik ("Hello World"). Die API hat ein Datenmodell (siehe ADRs 0001–0005) und erste Endpoints: Auth per Handynummer/SMS-OTP (`/auth/request-otp`, `/auth/verify-otp`) sowie Touren starten/beenden (`/tours`, `/tours/:id/end`).
+Web/Dashboard sind aktuell reine Grundgerüste ohne Fachlogik ("Hello World"). Die API hat ein Datenmodell (siehe ADRs 0001–0005) und erste Endpoints: Nutzer-Auth per Handynummer/SMS-OTP (`/auth/request-otp`, `/auth/verify-otp`), Touren starten/beenden/Pings senden (`/tours`, `/tours/:id/end`, `/tours/:id/pings`) sowie Bergwacht-Login und -Suche (`/rescue/login`, `/rescue/tours`).
 
 ## Voraussetzungen
 
@@ -63,6 +63,13 @@ pnpm db:down        # stoppt und entfernt die Container
 pnpm dev:web         # nur die Nutzer-PWA
 pnpm dev:dashboard   # nur das Bergwacht-Dashboard
 pnpm dev:api         # nur die API (Datenbank muss laufen)
+```
+
+Einen Bergwacht-Account anlegen (es gibt bewusst keinen Registrierungs-Endpoint, siehe ADR 0003 – Ausführen des Scripts entspricht der manuellen Verifizierung):
+
+```bash
+pnpm --filter @alpine-security/api exec tsx --env-file=.env \
+  src/scripts/create-rescue-member.ts <email> <passwort> <anzeigename>
 ```
 
 ## Weitere Skripte (im Root ausführbar)

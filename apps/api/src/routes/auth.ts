@@ -76,7 +76,7 @@ const authRoutes: FastifyPluginAsyncTypebox = async (server) => {
       request.log.info({ userId: user.id }, 'New user registered via OTP verification');
     }
 
-    const token = await reply.jwtSign({ userId: user.id });
+    const token = await reply.jwtSign({ role: 'user', userId: user.id });
 
     return reply.send({ token });
   });

@@ -3,6 +3,7 @@ import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { and, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { locationPing, tour } from '../db/schema.js';
+import { requireUser } from '../plugins/auth.js';
 
 const TourIdParams = Type.Object({
   id: Type.String({ format: 'uuid' }),
@@ -20,17 +21,14 @@ const pingRoutes: FastifyPluginAsyncTypebox = async (server) => {
     '/tours/:id/pings',
     { schema: { params: TourIdParams, body: CreatePingBody }, preHandler: server.authenticate },
     async (request, reply) => {
+      const { userId } = requireUser(request);
       const { latitude, longitude, recordedAt, accuracyMeters } = request.body;
 
       const [activeTour] = await db
         .select({ id: tour.id })
         .from(tour)
         .where(
-          and(
-            eq(tour.id, request.params.id),
-            eq(tour.userId, request.user.userId),
-            eq(tour.status, 'aktiv'),
-          ),
+          and(eq(tour.id, request.params.id), eq(tour.userId, userId), eq(tour.status, 'aktiv')),
         )
         .limit(1);
 

@@ -5,6 +5,7 @@ import authPlugin from './plugins/auth.js';
 import authRoutes from './routes/auth.js';
 import tourRoutes from './routes/tours.js';
 import pingRoutes from './routes/pings.js';
+import rescueRoutes from './routes/rescue.js';
 
 const server = Fastify({ logger: true }).withTypeProvider<TypeBoxTypeProvider>();
 
@@ -12,6 +13,7 @@ await server.register(authPlugin);
 await server.register(authRoutes);
 await server.register(tourRoutes);
 await server.register(pingRoutes);
+await server.register(rescueRoutes);
 
 server.get('/health', async (): Promise<HealthStatus> => {
   return {

@@ -14,7 +14,14 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - `packages/shared-types` – gemeinsame TS-Typen zwischen den Apps
 - Gemeinsames Setup: `tsconfig.base.json`, ESLint Flat Config (`eslint.config.js`), Prettier
 
-`web`/`dashboard` sind reine Grundgerüste ohne Fachlogik (Hello World). `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping` – siehe ADRs 0001–0005), aber noch keine fachlichen Endpoints, nur den Health-Check.
+`web`/`dashboard` sind reine Grundgerüste ohne Fachlogik (Hello World). `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping`, `otp_code` – siehe ADRs 0001–0005) und erste Endpoints:
+
+- Nutzer-Auth: `POST /auth/request-otp`, `POST /auth/verify-otp` (Handynummer + SMS-OTP-Stub, siehe ADR 0005)
+- Touren: `POST /tours`, `POST /tours/:id/end`, `POST /tours/:id/pings`
+- Bergwacht: `POST /rescue/login` (E-Mail/Passwort), `GET /rescue/tours?status=aktiv|beendet` (Suchwerkzeug aus ADR 0003, inkl. letztem bekannten Standort pro Tour)
+- Bergwacht-Accounts werden nicht über einen Endpoint angelegt, sondern über `apps/api/src/scripts/create-rescue-member.ts` (Operator-Tool, entspricht der manuellen Verifizierung aus ADR 0003)
+- JWTs tragen ein `role`-Feld (`user`/`rescue`); `requireUser`/`requireRescue` in `apps/api/src/plugins/auth.ts` setzen das durch – ein Wanderer-Token funktioniert nicht auf Bergwacht-Endpoints und umgekehrt
+- Bekannte Lücke: `GET /rescue/tours` filtert noch nicht nach `region` (MVP hat nur eine Region, siehe ADR 0003) – sobald eine zweite Region existiert, muss das nachgezogen werden
 
 ## Leitplanken
 
