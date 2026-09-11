@@ -4,12 +4,14 @@ import type { HealthStatus } from '@alpine-security/shared-types';
 import authPlugin from './plugins/auth.js';
 import authRoutes from './routes/auth.js';
 import tourRoutes from './routes/tours.js';
+import pingRoutes from './routes/pings.js';
 
 const server = Fastify({ logger: true }).withTypeProvider<TypeBoxTypeProvider>();
 
 await server.register(authPlugin);
 await server.register(authRoutes);
 await server.register(tourRoutes);
+await server.register(pingRoutes);
 
 server.get('/health', async (): Promise<HealthStatus> => {
   return {
