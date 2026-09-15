@@ -31,6 +31,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
 - `apps/web` und `apps/dashboard` haben noch keine Fachlogik (reine Grundgerüste)
 - Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
+- Teilbarer Tour-Link für Angehörige (ADR 0006) ist als Feature entschieden, aber noch nicht implementiert – offene Detailfragen (Ablauf/Widerruf, Granularität) siehe ADR
 
 ## Leitplanken
 
@@ -49,6 +50,7 @@ Neue, nicht-triviale Architekturentscheidungen als weiteres ADR unter `docs/adr/
 - [0003](docs/adr/0003-region-zugriffsmodell-verifizierung.md) – Region (MVP: Oberallgäu), Pull- statt Push-Zugriffsmodell, manuelle Account-Verifizierung
 - [0004](docs/adr/0004-kein-automatischer-ueberfaellig-status.md) – Kein automatischer "überfällig"-Status; Tour endet nur durch explizite Nutzeraktion
 - [0005](docs/adr/0005-auth-handynummer-sms-verifizierung.md) – Nutzer-Auth über Handynummer mit SMS-Verifizierung statt E-Mail/Passwort
+- [0006](docs/adr/0006-teilbarer-tour-link-fuer-angehoerige.md) – Teilbarer Tour-Link für Angehörige (Linkbesitz als Autorisierung), noch nicht implementiert
 
 ## Fortschritt
 

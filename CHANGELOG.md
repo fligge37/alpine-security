@@ -27,3 +27,4 @@ Fortlaufendes Protokoll der umgesetzten Schritte – chronologisch, wird nur erg
 - Integrationstests eingeführt: Vitest + Fastifys `.inject()` gegen die echte Postgres+PostGIS-Instanz (keine Mocks), 26 Tests über 5 Dateien (`health`, `auth`, `tours`, `pings`, `rescue`)
 - `src/index.ts` in `buildApp()` (`src/app.ts`) + schlankes Bootstrap aufgeteilt, damit Tests den Server ohne echten Netzwerk-Port ansprechen können
 - Test-Fixtures sind pro Test zufällig generiert (keine DB-Truncate) – Suite kann gefahrlos gegen die lokale Dev-Datenbank laufen
+- [ADR 0006](docs/adr/0006-teilbarer-tour-link-fuer-angehoerige.md): teilbarer Tour-Link für Angehörige (Linkbesitz als Autorisierung) als neues Feature entschieden – noch nicht implementiert, offene Detailfragen (Ablauf/Widerruf, Granularität) im ADR festgehalten
