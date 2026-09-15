@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getTours, type RescueTour, type TourStatus } from '../api/client';
 import { formatRelativeTime } from '../relativeTime';
 import { button, buttonSecondary, errorText, heading, hintText, screen } from '../ui';
+import ToursMap from '../components/ToursMap';
 
 interface ToursScreenProps {
   onLoggedOut: () => void;
@@ -70,6 +71,8 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
       </div>
 
       {error && <p className={errorText}>{error}</p>}
+
+      <ToursMap tours={tours === 'loading' ? [] : tours} />
 
       {tours === 'loading' && <p>Lade …</p>}
 
