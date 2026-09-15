@@ -13,8 +13,10 @@ function App() {
   }
 
   return (
-    <main className="app">
-      <div className="notice">Kein Ersatz für den Notruf. Im Notfall die 112 wählen.</div>
+    <main className="mx-auto flex min-h-screen max-w-md flex-col bg-slate-100 text-slate-800">
+      <div className="bg-slate-800 px-4 py-3 text-center text-sm text-white">
+        Kein Ersatz für den Notruf. Im Notfall die 112 wählen.
+      </div>
       {isLoggedIn ? (
         <TourScreen onLoggedOut={handleLoggedOut} />
       ) : (

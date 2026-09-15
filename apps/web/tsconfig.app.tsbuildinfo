@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/geolocation.ts","./src/main.tsx","./src/api/client.ts","./src/screens/loginscreen.tsx","./src/screens/tourscreen.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/geolocation.ts","./src/main.tsx","./src/ui.ts","./src/api/client.ts","./src/screens/loginscreen.tsx","./src/screens/tourscreen.tsx"],"version":"5.9.3"}

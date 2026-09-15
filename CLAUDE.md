@@ -13,6 +13,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - `apps/api` – Backend (Fastify, REST); Datenbank: PostgreSQL + PostGIS (Docker), Migrationen via Flyway (`apps/api/db/migrations`), Query-Schicht via Drizzle (`apps/api/src/db`) (siehe ADR 0002)
 - `packages/shared-types` – gemeinsame TS-Typen zwischen den Apps
 - Gemeinsames Setup: `tsconfig.base.json`, ESLint Flat Config (`eslint.config.js`), Prettier
+- Styling in `apps/web` und `apps/dashboard`: Tailwind CSS v4 über `@tailwindcss/vite` (kein PostCSS-Config nötig), CSS-Einstiegspunkt jeweils `src/App.css`/`src/index.css` mit nur `@import 'tailwindcss';`; wiederverwendete Klassen-Strings in `apps/web/src/ui.ts`
 
 `apps/dashboard` ist noch ein reines Grundgerüst ohne Fachlogik (Hello World). `apps/web` hat einen ersten Ende-zu-Ende-Flow für Wanderer (Login per Handynummer/OTP, Tour starten, Standort-Ping manuell senden, Tour beenden) unter `apps/web/src/screens`, angebunden über `apps/web/src/api/client.ts`; im Dev-Betrieb läuft ein Vite-Proxy (`/api` → `localhost:3000`) statt CORS im Backend. `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping`, `otp_code` – siehe ADRs 0001–0005) und erste Endpoints:
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { endTour, getActiveTour, sendPing, startTour, type Tour } from '../api/client';
 import { getCurrentPosition } from '../geolocation';
+import { button, buttonSecondary, errorText, heading, hintText, screen, successText } from '../ui';
 
 interface TourScreenProps {
   onLoggedOut: () => void;
@@ -67,7 +68,7 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
 
   if (tour === 'loading') {
     return (
-      <div className="screen">
+      <div className={screen}>
         <p>Lade …</p>
       </div>
     );
@@ -76,14 +77,16 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
   const isActive = tour !== null && tour.status === 'aktiv';
 
   return (
-    <div className="screen">
-      <h1>Tour</h1>
-      {error && <p className="error">{error}</p>}
+    <div className={screen}>
+      <h1 className={heading}>Tour</h1>
+      {error && <p className={errorText}>{error}</p>}
 
       {!isActive && (
         <>
           <p>Keine aktive Tour. Starte deine Tour, sobald du losgehst.</p>
-          <button onClick={handleStartTour}>Tour starten</button>
+          <button className={button} onClick={handleStartTour}>
+            Tour starten
+          </button>
         </>
       )}
 
@@ -97,27 +100,31 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
             })}
             .
           </p>
-          <p className="hint">
+          <p className={hintText}>
             Standort wird nicht automatisch im Hintergrund gesendet. Sende regelmäßig, wenn du Netz
             hast, damit dein letzter bekannter Standort aktuell bleibt.
           </p>
-          <button onClick={handleSendPing} disabled={pingStatus.state === 'sending'}>
+          <button
+            className={button}
+            onClick={handleSendPing}
+            disabled={pingStatus.state === 'sending'}
+          >
             {pingStatus.state === 'sending' ? 'Sende Standort …' : 'Standort jetzt senden'}
           </button>
           {pingStatus.state === 'sent' && (
-            <p className="success">
+            <p className={successText}>
               Standort gesendet um{' '}
               {pingStatus.at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}.
             </p>
           )}
-          {pingStatus.state === 'error' && <p className="error">{pingStatus.message}</p>}
-          <button className="secondary" onClick={handleEndTour}>
+          {pingStatus.state === 'error' && <p className={errorText}>{pingStatus.message}</p>}
+          <button className={buttonSecondary} onClick={handleEndTour}>
             Tour beenden
           </button>
         </>
       )}
 
-      <button className="secondary" onClick={onLoggedOut}>
+      <button className={buttonSecondary} onClick={onLoggedOut}>
         Abmelden
       </button>
     </div>
