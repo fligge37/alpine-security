@@ -22,6 +22,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - Bergwacht-Accounts werden nicht über einen Endpoint angelegt, sondern über `apps/api/src/scripts/create-rescue-member.ts` (Operator-Tool, entspricht der manuellen Verifizierung aus ADR 0003)
 - JWTs tragen ein `role`-Feld (`user`/`rescue`); `requireUser`/`requireRescue` in `apps/api/src/plugins/auth.ts` setzen das durch – ein Wanderer-Token funktioniert nicht auf Bergwacht-Endpoints und umgekehrt
 - Bekannte Lücke: `GET /rescue/tours` filtert noch nicht nach `region` (MVP hat nur eine Region, siehe ADR 0003) – sobald eine zweite Region existiert, muss das nachgezogen werden
+- Integrationstests (Vitest + Fastify `.inject()`, gegen echtes Postgres+PostGIS, keine Mocks) in `apps/api/tests` – Fixtures sind pro Test zufällig (kein DB-Truncate), lauffähig gegen die lokale Dev-DB: `pnpm --filter @alpine-security/api test`
 
 ## Leitplanken
 

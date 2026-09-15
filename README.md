@@ -72,6 +72,17 @@ pnpm --filter @alpine-security/api exec tsx --env-file=.env \
   src/scripts/create-rescue-member.ts <email> <passwort> <anzeigename>
 ```
 
+## Tests
+
+`apps/api` hat einen Integrationstest-Suite (Vitest + Fastifys `.inject()`, kein echter Netzwerk-Port nötig), die gegen die echte Postgres+PostGIS-Instanz läuft – Mocken der DB würde bei PostGIS-Geometrie und Constraints wenig bringen. Voraussetzung: Datenbank läuft und ist migriert (`pnpm db:up && pnpm db:migrate`).
+
+```bash
+pnpm --filter @alpine-security/api test         # einmal laufen lassen (CI-tauglich)
+pnpm --filter @alpine-security/api test:watch   # Watch-Modus für die Entwicklung
+```
+
+Jeder Test erzeugt eigene, zufällige Fixtures (Telefonnummern/E-Mails) statt die Datenbank zwischen Tests zu leeren – die Suite kann daher gefahrlos gegen die lokale Dev-Datenbank laufen, ohne bestehende Daten zu löschen (sie sammeln sich beim Testen zwar in den Tabellen an, das ist für lokale Entwicklung aber unkritisch).
+
 ## Weitere Skripte (im Root ausführbar)
 
 ```bash
