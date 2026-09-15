@@ -107,3 +107,70 @@ describe('tours: anlegen und beenden', () => {
     expect(res.statusCode).toBe(404);
   });
 });
+
+describe('GET /tours/active', () => {
+  let app: FastifyInstance;
+
+  beforeAll(async () => {
+    app = await buildApp({ logger: false });
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it('lehnt den Aufruf ohne Token ab (401)', async () => {
+    const res = await app.inject({ method: 'GET', url: '/tours/active' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('liefert 404, wenn keine aktive Tour existiert', async () => {
+    const { token } = await registerUser(app);
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tours/active',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('liefert die aktive Tour des eingeloggten Nutzers', async () => {
+    const { token, userId } = await registerUser(app);
+    const created = await app.inject({
+      method: 'POST',
+      url: '/tours',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const { id } = created.json() as { id: string };
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tours/active',
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ id, userId, status: 'aktiv' });
+  });
+
+  it('liefert nicht die aktive Tour eines anderen Nutzers', async () => {
+    const owner = await registerUser(app);
+    const otherUser = await registerUser(app);
+
+    await app.inject({
+      method: 'POST',
+      url: '/tours',
+      headers: { authorization: `Bearer ${owner.token}` },
+    });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tours/active',
+      headers: { authorization: `Bearer ${otherUser.token}` },
+    });
+
+    expect(res.statusCode).toBe(404);
+  });
+});

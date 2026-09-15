@@ -14,10 +14,10 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - `packages/shared-types` – gemeinsame TS-Typen zwischen den Apps
 - Gemeinsames Setup: `tsconfig.base.json`, ESLint Flat Config (`eslint.config.js`), Prettier
 
-`web`/`dashboard` sind reine Grundgerüste ohne Fachlogik (Hello World). `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping`, `otp_code` – siehe ADRs 0001–0005) und erste Endpoints:
+`apps/dashboard` ist noch ein reines Grundgerüst ohne Fachlogik (Hello World). `apps/web` hat einen ersten Ende-zu-Ende-Flow für Wanderer (Login per Handynummer/OTP, Tour starten, Standort-Ping manuell senden, Tour beenden) unter `apps/web/src/screens`, angebunden über `apps/web/src/api/client.ts`; im Dev-Betrieb läuft ein Vite-Proxy (`/api` → `localhost:3000`) statt CORS im Backend. `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping`, `otp_code` – siehe ADRs 0001–0005) und erste Endpoints:
 
 - Nutzer-Auth: `POST /auth/request-otp`, `POST /auth/verify-otp` (Handynummer + SMS-OTP-Stub, siehe ADR 0005)
-- Touren: `POST /tours`, `POST /tours/:id/end`, `POST /tours/:id/pings`
+- Touren: `POST /tours`, `GET /tours/active` (aktive Tour des eingeloggten Nutzers, für Restore nach Reload), `POST /tours/:id/end`, `POST /tours/:id/pings`
 - Bergwacht: `POST /rescue/login` (E-Mail/Passwort), `GET /rescue/tours?status=aktiv|beendet` (Suchwerkzeug aus ADR 0003, inkl. letztem bekannten Standort pro Tour)
 - Bergwacht-Accounts werden nicht über einen Endpoint angelegt, sondern über `apps/api/src/scripts/create-rescue-member.ts` (Operator-Tool, entspricht der manuellen Verifizierung aus ADR 0003)
 - JWTs tragen ein `role`-Feld (`user`/`rescue`); `requireUser`/`requireRescue` in `apps/api/src/plugins/auth.ts` setzen das durch – ein Wanderer-Token funktioniert nicht auf Bergwacht-Endpoints und umgekehrt
@@ -29,7 +29,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, siehe ADR 0005)
 - `GET /rescue/tours` filtert noch nicht nach `region` (nur eine Region im MVP, siehe ADR 0003)
 - Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
-- `apps/web` und `apps/dashboard` haben noch keine Fachlogik (reine Grundgerüste)
+- `apps/dashboard` hat noch keine Fachlogik (reines Grundgerüst); `apps/web` deckt bisher nur den Wanderer-Flow ab, kein Teilen/Angehörigen-Zugriff (siehe ADR 0006)
 - Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
 - Teilbarer Tour-Link für Angehörige (ADR 0006) ist als Feature entschieden, aber noch nicht implementiert – offene Detailfragen (Ablauf/Widerruf, Granularität) siehe ADR
 

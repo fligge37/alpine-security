@@ -28,3 +28,8 @@ Fortlaufendes Protokoll der umgesetzten Schritte – chronologisch, wird nur erg
 - `src/index.ts` in `buildApp()` (`src/app.ts`) + schlankes Bootstrap aufgeteilt, damit Tests den Server ohne echten Netzwerk-Port ansprechen können
 - Test-Fixtures sind pro Test zufällig generiert (keine DB-Truncate) – Suite kann gefahrlos gegen die lokale Dev-Datenbank laufen
 - [ADR 0006](docs/adr/0006-teilbarer-tour-link-fuer-angehoerige.md): teilbarer Tour-Link für Angehörige (Linkbesitz als Autorisierung) als neues Feature entschieden – noch nicht implementiert, offene Detailfragen (Ablauf/Widerruf, Granularität) im ADR festgehalten
+- `apps/web` bekommt erste Fachlogik: kompletter Ende-zu-Ende-Flow für Wanderer (Handynummer-Login mit OTP, Tour starten, Standort-Ping manuell senden, Tour beenden), verdrahtet gegen die bestehenden API-Endpoints
+- Neuer Endpoint `GET /tours/active`, damit der Client nach einem Reload weiß, ob bereits eine Tour läuft (inkl. Tests: kein Token, keine aktive Tour, eigene aktive Tour, fremde Tour nicht sichtbar)
+- Vite-Dev-Proxy (`/api` → `localhost:3000`) statt CORS-Konfiguration im Backend
+- Flow manuell gegen echtes Postgres+PostGIS end-to-end verifiziert (Playwright-Skript, nicht Teil des Repos): Login, Tour starten, Ping senden (Standort landete korrekt als PostGIS-Punkt in der DB), Tour beenden
+- Bugfix beim API-Client: `Content-Type: application/json` wurde auch bei Requests ohne Body gesetzt – Fastify lehnt das mit 400 ab (`FST_ERR_CTP_EMPTY_JSON_BODY`); Header wird jetzt nur bei tatsächlichem Body gesetzt

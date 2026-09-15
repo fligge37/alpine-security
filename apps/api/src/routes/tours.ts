@@ -1,6 +1,6 @@
 import { Type } from '@sinclair/typebox';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { tour } from '../db/schema.js';
 import { requireUser } from '../plugins/auth.js';
@@ -15,6 +15,26 @@ const tourRoutes: FastifyPluginAsyncTypebox = async (server) => {
     const [created] = await db.insert(tour).values({ userId }).returning();
 
     return reply.code(201).send(created);
+  });
+
+  // Ermöglicht dem Client, nach einem Reload/Neuanmelden festzustellen, ob
+  // bereits eine Tour läuft (es gibt keinen anderen Weg, das ohne serverseitigen
+  // Zustand zu wissen, da Touren nur clientseitig referenziert werden).
+  server.get('/tours/active', { preHandler: server.authenticate }, async (request, reply) => {
+    const { userId } = requireUser(request);
+
+    const [active] = await db
+      .select()
+      .from(tour)
+      .where(and(eq(tour.userId, userId), eq(tour.status, 'aktiv')))
+      .orderBy(desc(tour.startedAt))
+      .limit(1);
+
+    if (!active) {
+      return reply.code(404).send({ error: 'no_active_tour' });
+    }
+
+    return reply.send(active);
   });
 
   server.post(
