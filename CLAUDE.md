@@ -32,11 +32,12 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - `apps/dashboard` hat noch keine Fachlogik (reines Grundgerüst); `apps/web` deckt bisher nur den Wanderer-Flow ab, kein Teilen/Angehörigen-Zugriff (siehe ADR 0006)
 - Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
 - Teilbarer Tour-Link für Angehörige (ADR 0006) ist als Feature entschieden, aber noch nicht implementiert – offene Detailfragen (Ablauf/Widerruf, Granularität) siehe ADR
+- Natives Hintergrund-Tracking via Capacitor (ADR 0007) ist als Kurswechsel entschieden, aber noch nicht umgesetzt – offene Fragen (Plugin-Wahl, iOS-Permission-Flow, Retry-Strategie, Store-Distribution) siehe ADR
 
 ## Leitplanken
 
 - **Kein Ersatz für den Notruf.** Das muss sich in UX-Texten, Onboarding und technischen Grenzen widerspiegeln (z. B. keine automatische Sturzerkennung/Alarmierung ohne sehr hohe Zuverlässigkeit – Fehlalarme zerstören das Vertrauen der Bergwacht).
-- **Check-in-Modell statt Dauertracking** (ADR 0001): Standort wird opportunistisch bei Netzverfügbarkeit gesendet, kein kontinuierliches Hintergrund-GPS-Tracking. Das ist eine bewusste Architekturentscheidung (PWA-Tauglichkeit, Akkulaufzeit, Datensparsamkeit) – nicht ohne neues ADR ändern.
+- **Check-in-Modell als Fallback, natives Hintergrund-Tracking als primärer Weg** (ADR 0001 + [ADR 0007](docs/adr/0007-natives-hintergrund-tracking-capacitor.md)): Die PWA sendet Standorte weiterhin nur manuell/opportunistisch – das bleibt der Fallback für Nutzer ohne installierte App. Die über Capacitor gebaute native App (iOS zuerst) sendet automatisch im Hintergrund, ca. alle 2–3 Minuten während einer aktiven Tour. Kein Dauertracking in der PWA selbst – das war und bleibt technisch nicht zuverlässig umsetzbar.
 - **Bergwacht-Zugriff ist Pull, kein Push** (ADR 0003): Das System alarmiert die Bergwacht nicht automatisch bei "überfällig". Das Dashboard ist ein Suchwerkzeug für einen externen Anlass (Vermisstenmeldung, Sichtung) – kein Benachrichtigungsdienst an die Bergwacht im MVP.
 - **Datensparsamkeit/DSGVO beachten.** Standortverlauf nach Tourende zeitnah löschen; gestaffelte Löschfristen für den Ernstfall bewusst im Datenmodell abbilden, nicht als nachträglicher Fix.
 - **Regionale Zugriffskontrolle technisch durchsetzen.** Bergwacht-Accounts sehen nur Touren in ihrer zuständigen Region – sonst Datenschutzproblem. MVP-Scope laut ADR 0003: eine Region (Oberallgäu), `region` bleibt aber als eigene Entität für spätere Erweiterung.
@@ -51,6 +52,7 @@ Neue, nicht-triviale Architekturentscheidungen als weiteres ADR unter `docs/adr/
 - [0004](docs/adr/0004-kein-automatischer-ueberfaellig-status.md) – Kein automatischer "überfällig"-Status; Tour endet nur durch explizite Nutzeraktion
 - [0005](docs/adr/0005-auth-handynummer-sms-verifizierung.md) – Nutzer-Auth über Handynummer mit SMS-Verifizierung statt E-Mail/Passwort
 - [0006](docs/adr/0006-teilbarer-tour-link-fuer-angehoerige.md) – Teilbarer Tour-Link für Angehörige (Linkbesitz als Autorisierung), noch nicht implementiert
+- [0007](docs/adr/0007-natives-hintergrund-tracking-capacitor.md) – Natives Hintergrund-Tracking via Capacitor (iOS zuerst) statt reinem Check-in-Modell; PWA-Check-in bleibt Fallback, noch nicht implementiert
 
 ## Fortschritt
 
