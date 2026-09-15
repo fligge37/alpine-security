@@ -24,6 +24,14 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - Bekannte Lücke: `GET /rescue/tours` filtert noch nicht nach `region` (MVP hat nur eine Region, siehe ADR 0003) – sobald eine zweite Region existiert, muss das nachgezogen werden
 - Integrationstests (Vitest + Fastify `.inject()`, gegen echtes Postgres+PostGIS, keine Mocks) in `apps/api/tests` – Fixtures sind pro Test zufällig (kein DB-Truncate), lauffähig gegen die lokale Dev-DB: `pnpm --filter @alpine-security/api test`
 
+## Offene Punkte
+
+- SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, siehe ADR 0005)
+- `GET /rescue/tours` filtert noch nicht nach `region` (nur eine Region im MVP, siehe ADR 0003)
+- Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
+- `apps/web` und `apps/dashboard` haben noch keine Fachlogik (reine Grundgerüste)
+- Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
+
 ## Leitplanken
 
 - **Kein Ersatz für den Notruf.** Das muss sich in UX-Texten, Onboarding und technischen Grenzen widerspiegeln (z. B. keine automatische Sturzerkennung/Alarmierung ohne sehr hohe Zuverlässigkeit – Fehlalarme zerstören das Vertrauen der Bergwacht).
@@ -41,3 +49,7 @@ Neue, nicht-triviale Architekturentscheidungen als weiteres ADR unter `docs/adr/
 - [0003](docs/adr/0003-region-zugriffsmodell-verifizierung.md) – Region (MVP: Oberallgäu), Pull- statt Push-Zugriffsmodell, manuelle Account-Verifizierung
 - [0004](docs/adr/0004-kein-automatischer-ueberfaellig-status.md) – Kein automatischer "überfällig"-Status; Tour endet nur durch explizite Nutzeraktion
 - [0005](docs/adr/0005-auth-handynummer-sms-verifizierung.md) – Nutzer-Auth über Handynummer mit SMS-Verifizierung statt E-Mail/Passwort
+
+## Fortschritt
+
+Fortlaufendes, datiertes Protokoll der umgesetzten Schritte in [CHANGELOG.md](CHANGELOG.md) – nach jedem abgeschlossenen Arbeitsschritt dort einen Eintrag ergänzen (Datum + Stichpunkte), nicht überschreiben. CLAUDE.md bleibt der kompakte Ist-Zustand, CHANGELOG.md die Historie dazu.
