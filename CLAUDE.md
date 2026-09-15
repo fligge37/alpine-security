@@ -15,7 +15,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - Gemeinsames Setup: `tsconfig.base.json`, ESLint Flat Config (`eslint.config.js`), Prettier
 - Styling in `apps/web` und `apps/dashboard`: Tailwind CSS v4 über `@tailwindcss/vite` (kein PostCSS-Config nötig), CSS-Einstiegspunkt jeweils `src/App.css`/`src/index.css` mit nur `@import 'tailwindcss';`; wiederverwendete Klassen-Strings in `apps/web/src/ui.ts`
 
-`apps/dashboard` ist noch ein reines Grundgerüst ohne Fachlogik (Hello World). `apps/web` hat einen ersten Ende-zu-Ende-Flow für Wanderer (Login per Handynummer/OTP, Tour starten, Standort-Ping manuell senden, Tour beenden) unter `apps/web/src/screens`, angebunden über `apps/web/src/api/client.ts`; im Dev-Betrieb läuft ein Vite-Proxy (`/api` → `localhost:3000`) statt CORS im Backend. `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping`, `otp_code` – siehe ADRs 0001–0005) und erste Endpoints:
+`apps/web` hat einen ersten Ende-zu-Ende-Flow für Wanderer (Login per Handynummer/OTP, Tour starten, Standort-Ping manuell senden, Tour beenden) unter `apps/web/src/screens`, angebunden über `apps/web/src/api/client.ts`. `apps/dashboard` hat den entsprechenden Flow für die Bergwacht (Login per E-Mail/Passwort, Touren-Suche nach Status `aktiv`/`beendet` inkl. letztem bekannten Standort) unter `apps/dashboard/src/screens`, angebunden über `apps/dashboard/src/api/client.ts`. Beide Apps: im Dev-Betrieb läuft je ein Vite-Proxy (`/api` → `localhost:3000`) statt CORS im Backend. `apps/api` hat ein migriertes Datenmodell (`region`, `app_user`, `rescue_org_member`, `tour`, `location_ping`, `otp_code` – siehe ADRs 0001–0005) und erste Endpoints:
 
 - Nutzer-Auth: `POST /auth/request-otp`, `POST /auth/verify-otp` (Handynummer + SMS-OTP-Stub, siehe ADR 0005)
 - Touren: `POST /tours`, `GET /tours/active` (aktive Tour des eingeloggten Nutzers, für Restore nach Reload), `POST /tours/:id/end`, `POST /tours/:id/pings`
@@ -30,7 +30,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, siehe ADR 0005)
 - `GET /rescue/tours` filtert noch nicht nach `region` (nur eine Region im MVP, siehe ADR 0003)
 - Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
-- `apps/dashboard` hat noch keine Fachlogik (reines Grundgerüst); `apps/web` deckt bisher nur den Wanderer-Flow ab, kein Teilen/Angehörigen-Zugriff (siehe ADR 0006)
+- `apps/web` deckt bisher nur den Wanderer-Flow ab, kein Teilen/Angehörigen-Zugriff (siehe ADR 0006)
 - Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
 - Teilbarer Tour-Link für Angehörige (ADR 0006) ist als Feature entschieden, aber noch nicht implementiert – offene Detailfragen (Ablauf/Widerruf, Granularität) siehe ADR
 - Natives Hintergrund-Tracking via Capacitor (ADR 0007) ist als Kurswechsel entschieden, aber noch nicht umgesetzt – offene Fragen (Plugin-Wahl, iOS-Permission-Flow, Retry-Strategie, Store-Distribution) siehe ADR

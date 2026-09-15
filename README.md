@@ -17,7 +17,7 @@ docs/
   adr/          Architecture Decision Records
 ```
 
-Web/Dashboard sind aktuell reine Grundgerüste ohne Fachlogik ("Hello World"). Die API hat ein Datenmodell (siehe ADRs 0001–0005) und erste Endpoints: Nutzer-Auth per Handynummer/SMS-OTP (`/auth/request-otp`, `/auth/verify-otp`), Touren starten/beenden/Pings senden (`/tours`, `/tours/:id/end`, `/tours/:id/pings`) sowie Bergwacht-Login und -Suche (`/rescue/login`, `/rescue/tours`).
+`apps/web` deckt den Wanderer-Flow ab (Login, Tour starten/beenden, Standort-Ping senden), `apps/dashboard` den Bergwacht-Flow (Login, Touren-Suche nach Status). Die API hat ein Datenmodell (siehe ADRs 0001–0005) und die passenden Endpoints: Nutzer-Auth per Handynummer/SMS-OTP (`/auth/request-otp`, `/auth/verify-otp`), Touren starten/beenden/Pings senden (`/tours`, `/tours/active`, `/tours/:id/end`, `/tours/:id/pings`) sowie Bergwacht-Login und -Suche (`/rescue/login`, `/rescue/tours`).
 
 ## Voraussetzungen
 
@@ -71,6 +71,18 @@ Einen Bergwacht-Account anlegen (es gibt bewusst keinen Registrierungs-Endpoint,
 pnpm --filter @alpine-security/api exec tsx --env-file=.env \
   src/scripts/create-rescue-member.ts <email> <passwort> <anzeigename>
 ```
+
+Für lokale Entwicklung/Tests hat sich folgender Test-Account etabliert (einmalig anlegen, danach für jeden Dashboard-Login wiederverwendbar):
+
+```bash
+pnpm --filter @alpine-security/api exec tsx --env-file=.env \
+  src/scripts/create-rescue-member.ts dashboard-test@example.com testpasswort123 "Testperson Bergwacht"
+```
+
+- E-Mail: `dashboard-test@example.com`
+- Passwort: `testpasswort123`
+
+Existiert nur in der lokalen Dev-Datenbank; nach einem `docker compose down -v`/DB-Reset muss der Befehl erneut ausgeführt werden (E-Mail ist `UNIQUE`, ein zweiter Aufruf mit derselben Adresse schlägt sonst fehl).
 
 ## Tests
 
