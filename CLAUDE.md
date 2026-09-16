@@ -34,6 +34,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
 - Teilbarer Tour-Link für Angehörige (ADR 0006) ist als Feature entschieden, aber noch nicht implementiert – offene Detailfragen (Ablauf/Widerruf, Granularität) siehe ADR
 - Natives Hintergrund-Tracking via Capacitor (ADR 0007) ist als Kurswechsel entschieden, aber noch nicht umgesetzt – offene Fragen (Plugin-Wahl, iOS-Permission-Flow, Retry-Strategie, Store-Distribution) siehe ADR
+- Satellitenbild-Ansicht für `ToursMap` (Bergwacht-Dashboard) ist als Ausbau geplant, aber bewusst zurückgestellt: der kostenlose, keyless Anbieter (EOX Sentinel-2 Cloudless) ist nur für die 2016/2017er-Bilder kommerziell nutzbar (CC BY 4.0) – jede aktuellere Version (2018–2025) steht unter CC BY-NC-SA (nicht-kommerziell), was für ein kommerzielles Produkt riskant wäre. Stattdessen soll später ein Anbieter mit kostenlosem API-Key-Kontingent (z. B. MapTiler Satellite oder Mapbox Satellite) angebunden werden – aktuelle Bilder, klare kommerzielle Lizenz, braucht aber einen Account/Key statt der bisherigen keyless Kartenquellen (OpenFreeMap, AWS-Terrain-Tiles)
 
 ## Leitplanken
 
