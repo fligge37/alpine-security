@@ -16,7 +16,24 @@ export interface Tour {
   status: 'aktiv' | 'beendet';
   startedAt: string;
   endedAt: string | null;
+  shareToken: string | null;
   createdAt: string;
+}
+
+export interface TrackPoint {
+  recordedAt: string;
+  latitude: number;
+  longitude: number;
+  accuracyMeters: number | null;
+}
+
+export interface SharedTour {
+  id: string;
+  status: 'aktiv' | 'beendet';
+  startedAt: string;
+  endedAt: string | null;
+  displayName: string | null;
+  track: TrackPoint[];
 }
 
 export function getToken(): string | null {
@@ -114,4 +131,16 @@ export async function sendPing(tourId: string, input: PingInput): Promise<void> 
     auth: true,
     body: { ...input, recordedAt: new Date().toISOString() },
   });
+}
+
+export async function createShareLink(tourId: string): Promise<Tour> {
+  return apiFetch<Tour>(`/tours/${tourId}/share`, { method: 'POST', auth: true });
+}
+
+export async function revokeShareLink(tourId: string): Promise<Tour> {
+  return apiFetch<Tour>(`/tours/${tourId}/share`, { method: 'DELETE', auth: true });
+}
+
+export async function getSharedTour(token: string): Promise<SharedTour> {
+  return apiFetch<SharedTour>(`/share/${token}`);
 }

@@ -20,6 +20,12 @@ export default defineConfig({
       },
     }),
   ],
+  // Vites Dependency-Pre-Bundling legt maplibre-gl-worker.mjs nicht neben die
+  // gebündelte maplibre-gl.js – der Worker-Pfad zeigt dann ins Leere (404) und
+  // die Karte rendert nur den Hintergrund, ohne Vektordaten oder Terrain.
+  optimizeDeps: {
+    exclude: ['maplibre-gl'],
+  },
   server: {
     port: 5180,
     strictPort: true,

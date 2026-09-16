@@ -127,6 +127,9 @@ importers:
       '@alpine-security/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      maplibre-gl:
+        specifier: ^6.9.1
+        version: 6.9.1
       react:
         specifier: ^18.3.1
         version: 18.3.1

@@ -9,3 +9,5 @@ export const buttonSecondary =
 export const errorText = 'text-sm text-red-700';
 export const successText = 'text-sm text-green-700';
 export const hintText = 'text-sm text-slate-500';
+export const subheading = 'text-lg font-semibold text-slate-800';
+export const card = 'flex flex-col gap-2 rounded-lg border border-slate-300 p-4';

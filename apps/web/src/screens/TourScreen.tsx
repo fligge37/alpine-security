@@ -1,7 +1,26 @@
 import { useEffect, useState } from 'react';
-import { endTour, getActiveTour, sendPing, startTour, type Tour } from '../api/client';
+import {
+  createShareLink,
+  endTour,
+  getActiveTour,
+  revokeShareLink,
+  sendPing,
+  startTour,
+  type Tour,
+} from '../api/client';
 import { getCurrentPosition } from '../geolocation';
-import { button, buttonSecondary, errorText, heading, hintText, screen, successText } from '../ui';
+import {
+  button,
+  buttonSecondary,
+  card,
+  errorText,
+  heading,
+  hintText,
+  input,
+  screen,
+  subheading,
+  successText,
+} from '../ui';
 
 interface TourScreenProps {
   onLoggedOut: () => void;
@@ -17,6 +36,9 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
   const [tour, setTour] = useState<Tour | null | 'loading'>('loading');
   const [error, setError] = useState<string | null>(null);
   const [pingStatus, setPingStatus] = useState<PingStatus>({ state: 'idle' });
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
     getActiveTour()
@@ -63,6 +85,46 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
         message:
           'Standort konnte nicht gesendet werden. Standortfreigabe prüfen und erneut versuchen.',
       });
+    }
+  }
+
+  async function handleCreateShareLink() {
+    if (!tour || tour === 'loading') return;
+    setShareBusy(true);
+    setShareError(null);
+    try {
+      const updated = await createShareLink(tour.id);
+      setTour(updated);
+      setShareCopied(false);
+    } catch {
+      setShareError('Link konnte nicht erzeugt werden.');
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  async function handleRevokeShareLink() {
+    if (!tour || tour === 'loading') return;
+    setShareBusy(true);
+    setShareError(null);
+    try {
+      const updated = await revokeShareLink(tour.id);
+      setTour(updated);
+      setShareCopied(false);
+    } catch {
+      setShareError('Link konnte nicht widerrufen werden.');
+    } finally {
+      setShareBusy(false);
+    }
+  }
+
+  async function handleCopyShareLink(shareToken: string) {
+    const link = `${window.location.origin}/share/${shareToken}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setShareCopied(true);
+    } catch {
+      setShareCopied(false);
     }
   }
 
@@ -122,6 +184,45 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
             Tour beenden
           </button>
         </>
+      )}
+
+      {tour !== null && (
+        <div className={card}>
+          <h2 className={subheading}>Link für Angehörige</h2>
+          <p className={hintText}>
+            Wer diesen Link hat, sieht den bisherigen Tourverlauf – kein Live-Tracking, kein Ersatz
+            für den Notruf. Der Link funktioniert während der Tour und bis 24 Stunden nach
+            Tourende.
+          </p>
+
+          {tour.shareToken ? (
+            <>
+              <input
+                className={input}
+                readOnly
+                value={`${window.location.origin}/share/${tour.shareToken}`}
+                onFocus={(e) => e.target.select()}
+              />
+              <div className="flex gap-2">
+                <button
+                  className={button}
+                  onClick={() => handleCopyShareLink(tour.shareToken as string)}
+                  disabled={shareBusy}
+                >
+                  {shareCopied ? 'Kopiert!' : 'Link kopieren'}
+                </button>
+                <button className={buttonSecondary} onClick={handleRevokeShareLink} disabled={shareBusy}>
+                  Widerrufen
+                </button>
+              </div>
+            </>
+          ) : (
+            <button className={button} onClick={handleCreateShareLink} disabled={shareBusy}>
+              Link erzeugen
+            </button>
+          )}
+          {shareError && <p className={errorText}>{shareError}</p>}
+        </div>
       )}
 
       <button className={buttonSecondary} onClick={onLoggedOut}>

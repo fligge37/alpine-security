@@ -6,6 +6,7 @@ import authRoutes from './routes/auth.js';
 import tourRoutes from './routes/tours.js';
 import pingRoutes from './routes/pings.js';
 import rescueRoutes from './routes/rescue.js';
+import shareRoutes from './routes/share.js';
 
 export async function buildApp(options?: { logger?: boolean }) {
   const server = Fastify({
@@ -17,6 +18,7 @@ export async function buildApp(options?: { logger?: boolean }) {
   await server.register(tourRoutes);
   await server.register(pingRoutes);
   await server.register(rescueRoutes);
+  await server.register(shareRoutes);
 
   server.get('/health', async (): Promise<HealthStatus> => {
     return {
