@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getTours, type RescueTour, type TourStatus } from '../api/client';
+import { getTours, holdTour, releaseTourHold, type RescueTour, type TourStatus } from '../api/client';
 import { formatRelativeTime } from '../relativeTime';
 import { button, buttonSecondary, errorText, heading, hintText, screen } from '../ui';
 import ToursMap from '../components/ToursMap';
@@ -21,6 +21,23 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
   const [status, setStatus] = useState<TourStatus>('aktiv');
   const [tours, setTours] = useState<RescueTour[] | 'loading'>('loading');
   const [error, setError] = useState<string | null>(null);
+  const [holdBusyId, setHoldBusyId] = useState<string | null>(null);
+
+  async function toggleHold(t: RescueTour) {
+    setHoldBusyId(t.id);
+    try {
+      const updated = t.retentionHoldAt ? await releaseTourHold(t.id) : await holdTour(t.id);
+      setTours((prev) =>
+        prev === 'loading'
+          ? prev
+          : prev.map((x) => (x.id === t.id ? { ...x, retentionHoldAt: updated.retentionHoldAt } : x)),
+      );
+    } catch {
+      setError('Halten/Freigeben ist fehlgeschlagen.');
+    } finally {
+      setHoldBusyId(null);
+    }
+  }
 
   function loadTours(nextStatus: TourStatus) {
     setTours('loading');
@@ -109,6 +126,25 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
               ) : (
                 <p className="mt-1 text-sm text-slate-500">Noch kein Standort empfangen.</p>
               )}
+              <div className="mt-3 flex items-center gap-3 border-t border-slate-200 pt-3">
+                {t.retentionHoldAt ? (
+                  <p className="text-sm text-amber-700">
+                    Für Ernstfall gehalten seit {formatDateTime(t.retentionHoldAt)} – von der
+                    automatischen Löschung ausgenommen.
+                  </p>
+                ) : (
+                  <p className={hintText}>
+                    Standortverlauf wird nach der regulären Frist automatisch gelöscht.
+                  </p>
+                )}
+                <button
+                  className={`${buttonSecondary} ml-auto px-3 py-1.5 text-xs`}
+                  disabled={holdBusyId === t.id}
+                  onClick={() => toggleHold(t)}
+                >
+                  {t.retentionHoldAt ? 'Hold aufheben' : 'Für Ernstfall halten'}
+                </button>
+              </div>
             </li>
           ))}
         </ul>

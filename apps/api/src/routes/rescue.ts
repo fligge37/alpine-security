@@ -15,6 +15,10 @@ const ToursQuery = Type.Object({
   status: Type.Optional(Type.Union([Type.Literal('aktiv'), Type.Literal('beendet')])),
 });
 
+const TourIdParams = Type.Object({
+  id: Type.String({ format: 'uuid' }),
+});
+
 interface LatestPingRow extends Record<string, unknown> {
   recorded_at: string;
   latitude: number;
@@ -82,6 +86,7 @@ const rescueRoutes: FastifyPluginAsyncTypebox = async (server) => {
           status: tour.status,
           startedAt: tour.startedAt,
           endedAt: tour.endedAt,
+          retentionHoldAt: tour.retentionHoldAt,
           phoneNumber: appUser.phoneNumber,
           displayName: appUser.displayName,
         })
@@ -95,6 +100,50 @@ const rescueRoutes: FastifyPluginAsyncTypebox = async (server) => {
       );
 
       return reply.send(withLastPing);
+    },
+  );
+
+  // Nimmt eine konkrete Tour von der automatischen Löschung ihres Standort-
+  // verlaufs aus (ADR 0008, "Ernstfall"-Fall) - kein Ablaufdatum, bis der Hold
+  // aktiv wieder aufgehoben wird. Erneutes Aufrufen aktualisiert nur, wer
+  // zuletzt gehalten hat.
+  server.post(
+    '/rescue/tours/:id/hold',
+    { schema: { params: TourIdParams }, preHandler: server.authenticate },
+    async (request, reply) => {
+      const { rescueMemberId } = requireRescue(request);
+
+      const [updated] = await db
+        .update(tour)
+        .set({ retentionHoldAt: new Date(), retentionHoldBy: rescueMemberId })
+        .where(eq(tour.id, request.params.id))
+        .returning();
+
+      if (!updated) {
+        return reply.code(404).send({ error: 'tour_not_found' });
+      }
+
+      return reply.send(updated);
+    },
+  );
+
+  server.delete(
+    '/rescue/tours/:id/hold',
+    { schema: { params: TourIdParams }, preHandler: server.authenticate },
+    async (request, reply) => {
+      requireRescue(request);
+
+      const [updated] = await db
+        .update(tour)
+        .set({ retentionHoldAt: null, retentionHoldBy: null })
+        .where(eq(tour.id, request.params.id))
+        .returning();
+
+      if (!updated) {
+        return reply.code(404).send({ error: 'tour_not_found' });
+      }
+
+      return reply.send(updated);
     },
   );
 };

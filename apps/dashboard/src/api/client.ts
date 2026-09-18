@@ -24,6 +24,7 @@ export interface RescueTour {
   status: TourStatus;
   startedAt: string;
   endedAt: string | null;
+  retentionHoldAt: string | null;
   phoneNumber: string;
   displayName: string | null;
   lastPing: LastPing | null;
@@ -87,4 +88,14 @@ export async function login(email: string, password: string): Promise<void> {
 
 export async function getTours(status: TourStatus): Promise<RescueTour[]> {
   return apiFetch<RescueTour[]>(`/rescue/tours?status=${status}`, { auth: true });
+}
+
+// Nimmt eine Tour von der automatischen Löschung ihres Standortverlaufs aus
+// (ADR 0008, "Ernstfall"-Fall) bzw. hebt das wieder auf.
+export async function holdTour(id: string): Promise<RescueTour> {
+  return apiFetch<RescueTour>(`/rescue/tours/${id}/hold`, { method: 'POST', auth: true });
+}
+
+export async function releaseTourHold(id: string): Promise<RescueTour> {
+  return apiFetch<RescueTour>(`/rescue/tours/${id}/hold`, { method: 'DELETE', auth: true });
 }

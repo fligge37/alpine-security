@@ -45,6 +45,8 @@ export const tour = pgTable('tour', {
   startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
   endedAt: timestamp('ended_at', { withTimezone: true }),
   shareToken: text('share_token').unique(),
+  retentionHoldAt: timestamp('retention_hold_at', { withTimezone: true }),
+  retentionHoldBy: uuid('retention_hold_by').references(() => rescueOrgMember.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
