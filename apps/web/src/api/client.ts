@@ -1,4 +1,10 @@
-const API_BASE = '/api';
+import { Capacitor } from '@capacitor/core';
+
+// Im Browser läuft der Vite-Dev-Proxy (/api -> localhost:3000, siehe CLAUDE.md).
+// In der nativen App gibt es diesen Proxy nicht, also eine absolute URL nötig.
+const API_BASE = Capacitor.isNativePlatform()
+  ? (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000')
+  : '/api';
 const TOKEN_KEY = 'alpine-security:token';
 
 export class ApiError extends Error {

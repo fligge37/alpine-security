@@ -23,11 +23,17 @@ Das kippt ADR 0001s ursprüngliche Empfehlung, mit Ansatz B allein zu starten, n
 - Das Datenmodell (`location_ping`) ändert sich nicht – es wird weiterhin ein Einzelpunkt pro Ping gespeichert, kein durchgehender Track. Es ändert sich nur, wie und wann ein Ping entsteht.
 - Zwei Client-Oberflächen mit unterschiedlicher Zuverlässigkeit koexistieren dauerhaft: die installierte native App (automatisch, im Hintergrund) und die PWA (manuell, Fallback). Die Bergwacht sieht am `location_ping`-Datensatz nicht, über welchen Weg er entstanden ist – das kann relevant werden, wenn "letzter bekannter Standort vor X Minuten" unterschiedlich einzuordnen ist, je nachdem ob automatisch oder manuell gesendet wurde.
 
-## Offene Fragen (vor Umsetzung zu klären)
+## Umsetzung iOS (Stand: erste Version)
 
-- Welches Capacitor-Background-Geolocation-Plugin (z. B. `@capacitor-community/background-geolocation`), inkl. Lizenz-/Kosten-Prüfung und Funktionsumfang unter iOS-Beschränkungen
-- Wann wird die "Always"-Berechtigung angefragt (bei Tour-Start vs. beim ersten App-Start) und mit welchem Erklärtext gegenüber Nutzer und App-Review
-- Batching-/Retry-Strategie bei fehlendem Netz: wie lange werden ungesendete Pings lokal vorgehalten, wie viele Wiederholversuche
+Die iOS-Umsetzung beantwortet einen Teil der ursprünglich offenen Fragen:
+
+- **Plugin:** `@capacitor-community/background-geolocation` (MIT, kostenlos) statt einer kommerziellen Lösung wie transistorsoft – passt zum bisherigen keyless/kostenlosen Kartenstack. Das Plugin bietet keine native Zeitintervall-Option, nur `addWatcher`/`removeWatcher` mit `distanceFilter` (Meter). Das 2–3-Minuten-Ziel aus ADR 0001 wird deshalb App-seitig als Throttling auf die Location-Callbacks umgesetzt (`apps/web/src/backgroundTracking.ts`): `distanceFilter: 50`, tatsächlicher Ping höchstens alle 2 Minuten, Ausnahme ist der erste Fix nach Tour-Start (sofort gesendet).
+- **Permission-Zeitpunkt:** Die "Always"-Berechtigung wird beim Tippen auf "Tour starten" angefragt (`requestPermissions: true` beim ersten `addWatcher`-Aufruf), nicht beim ersten App-Start – Apples "just in time"-Muster, passt zum bestehenden Flow.
+- **Batching/Retry:** einfache `localStorage`-Warteschlange (letzte 50 Einträge, älteste fällt raus), wird bei jedem neuen Location-Event zuerst nachgesendet, bevor der neue Punkt behandelt wird. Kein unbegrenztes Vorhalten alter Standorte (Datensparsamkeit-Leitplanke).
+- **iOS-Konfiguration:** `NSLocationWhenInUseUsageDescription` + `NSLocationAlwaysAndWhenInUseUsageDescription` + `UIBackgroundModes: [location]` in `apps/web/ios/App/App/Info.plist`, mit Texten, die "kein Ersatz für den Notruf" nicht unterlaufen.
+
+## Offene Fragen (weiterhin offen)
+
 - Android-Pendant (Foreground Service, "Standortzugriff immer zulassen"-Berechtigung, Akku-Optimierungs-Ausnahmen je Hersteller)
-- App-Store-/Play-Store-Distribution (Entwicklerkonten, Review-Prozess, Versionierung) ist noch nicht aufgesetzt
-- Soll am `location_ping`-Datensatz künftig erkennbar sein, ob er automatisch (native App) oder manuell (PWA-Fallback) gesendet wurde?
+- App-Store-/Play-Store-Distribution (Entwicklerkonten, Review-Prozess, Versionierung, echte Bundle-ID statt Platzhalter `com.alpinesecurity.app`) ist noch nicht aufgesetzt
+- Soll am `location_ping`-Datensatz künftig erkennbar sein, ob er automatisch (native App) oder manuell (PWA-Fallback) gesendet wurde? (bewusst nicht Teil der iOS-Umsetzung – wäre eine DB/API-Änderung)

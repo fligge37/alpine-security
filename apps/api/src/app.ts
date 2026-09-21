@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox';
 import type { HealthStatus } from '@alpine-security/shared-types';
 import authPlugin from './plugins/auth.js';
@@ -12,6 +13,11 @@ export async function buildApp(options?: { logger?: boolean }) {
   const server = Fastify({
     logger: options?.logger ?? true,
   }).withTypeProvider<TypeBoxTypeProvider>();
+
+  // Im Browser läuft der Vite-Dev-Proxy (same-origin, kein CORS nötig). Die
+  // native iOS-App (Capacitor) ruft die API dagegen direkt von ihrer eigenen
+  // WKWebView-Origin aus auf, das braucht eine explizite CORS-Freigabe.
+  await server.register(cors, { origin: ['capacitor://localhost'] });
 
   await server.register(authPlugin);
   await server.register(authRoutes);

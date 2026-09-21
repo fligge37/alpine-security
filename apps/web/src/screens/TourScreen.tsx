@@ -1,3 +1,4 @@
+import { Capacitor } from '@capacitor/core';
 import { useEffect, useState } from 'react';
 import {
   createShareLink,
@@ -8,6 +9,7 @@ import {
   startTour,
   type Tour,
 } from '../api/client';
+import { startBackgroundTracking, stopBackgroundTracking } from '../backgroundTracking';
 import { getCurrentPosition } from '../geolocation';
 import {
   button,
@@ -42,7 +44,12 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
 
   useEffect(() => {
     getActiveTour()
-      .then(setTour)
+      .then((loaded) => {
+        setTour(loaded);
+        if (loaded && loaded.status === 'aktiv') {
+          void startBackgroundTracking(loaded.id);
+        }
+      })
       .catch(() => setError('Tour-Status konnte nicht geladen werden.'));
   }, []);
 
@@ -52,6 +59,7 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
       const created = await startTour();
       setTour(created);
       setPingStatus({ state: 'idle' });
+      await startBackgroundTracking(created.id);
     } catch {
       setError('Tour konnte nicht gestartet werden.');
     }
@@ -63,6 +71,7 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
     try {
       const ended = await endTour(tour.id);
       setTour(ended);
+      await stopBackgroundTracking();
     } catch {
       setError('Tour konnte nicht beendet werden.');
     }
@@ -163,8 +172,9 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
             .
           </p>
           <p className={hintText}>
-            Standort wird nicht automatisch im Hintergrund gesendet. Sende regelmäßig, wenn du Netz
-            hast, damit dein letzter bekannter Standort aktuell bleibt.
+            {Capacitor.isNativePlatform()
+              ? 'Standort wird automatisch im Hintergrund gesendet, solange die Tour läuft.'
+              : 'Standort wird nicht automatisch im Hintergrund gesendet. Sende regelmäßig, wenn du Netz hast, damit dein letzter bekannter Standort aktuell bleibt.'}
           </p>
           <button
             className={button}
