@@ -34,8 +34,9 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 - SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, siehe ADR 0005)
 - `GET /rescue/tours` filtert noch nicht nach `region` (nur eine Region im MVP, siehe ADR 0003)
 - Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
-- Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal)
+- Keine CI-Pipeline (Tests/Lint/Typecheck laufen bisher nur lokal) – hängt am selben fehlenden Infra-Baustein wie das Deployment, siehe ADR 0009
 - Löschfrist für Standortverlauf (ADR 0008) ist als Script implementiert, aber noch nicht per Cron eingeplant – hängt am selben fehlenden Infra-Baustein wie die CI-Pipeline
+- Deployment (ADR 0009) ist entschieden (VPS + Docker Compose, self-hosted Postgres+PostGIS, eine Umgebung), aber noch nicht umgesetzt – offene Fragen (Anbieter/Region, TLS, Secrets, CI/CD, Backup-Strategie) siehe ADR
 - Teilbarer Tour-Link für Angehörige (ADR 0006) ist implementiert, aber auf ein Link pro Tour begrenzt (MVP) – mehrere einzeln widerrufbare Links pro Empfänger sind eine mögliche spätere Erweiterung, kein aktueller Scope
 - Natives Hintergrund-Tracking via Capacitor (ADR 0007) ist für iOS umgesetzt (Plugin-Wahl, Permission-Flow, Retry-Strategie geklärt); Android, echte Store-Bundle-ID und Ping-Quelle-Markierung sind noch offen (siehe ADR)
 - Satellitenbild-Ansicht für `ToursMap` (Bergwacht-Dashboard) ist als Ausbau geplant, aber bewusst zurückgestellt: der kostenlose, keyless Anbieter (EOX Sentinel-2 Cloudless) ist nur für die 2016/2017er-Bilder kommerziell nutzbar (CC BY 4.0) – jede aktuellere Version (2018–2025) steht unter CC BY-NC-SA (nicht-kommerziell), was für ein kommerzielles Produkt riskant wäre. Stattdessen soll später ein Anbieter mit kostenlosem API-Key-Kontingent (z. B. MapTiler Satellite oder Mapbox Satellite) angebunden werden – aktuelle Bilder, klare kommerzielle Lizenz, braucht aber einen Account/Key statt der bisherigen keyless Kartenquellen (OpenFreeMap, AWS-Terrain-Tiles)
@@ -60,6 +61,7 @@ Neue, nicht-triviale Architekturentscheidungen als weiteres ADR unter `docs/adr/
 - [0006](docs/adr/0006-teilbarer-tour-link-fuer-angehoerige.md) – Teilbarer Tour-Link für Angehörige (Linkbesitz als Autorisierung), implementiert
 - [0007](docs/adr/0007-natives-hintergrund-tracking-capacitor.md) – Natives Hintergrund-Tracking via Capacitor (iOS zuerst) statt reinem Check-in-Modell; PWA-Check-in bleibt Fallback, noch nicht implementiert
 - [0008](docs/adr/0008-loeschfristen-standortverlauf.md) – Löschfristen für den Standortverlauf: 7-Tage-Basisfrist nach Tourende plus manueller Hold durch die Bergwacht für den Ernstfall, implementiert
+- [0009](docs/adr/0009-deployment-vps-docker-compose.md) – Deployment: einzelner VPS mit Docker Compose, selbst gehostetes Postgres+PostGIS, nur eine Umgebung fürs MVP – entschieden, noch nicht umgesetzt
 
 ## Fortschritt
 
