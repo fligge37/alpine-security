@@ -28,7 +28,10 @@ describe('share: Link erzeugen und widerrufen', () => {
   });
 
   it('lehnt POST /tours/:id/share ohne Token ab (401)', async () => {
-    const res = await app.inject({ method: 'POST', url: '/tours/00000000-0000-0000-0000-000000000000/share' });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tours/00000000-0000-0000-0000-000000000000/share',
+    });
     expect(res.statusCode).toBe(401);
   });
 

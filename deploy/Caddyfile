@@ -1,0 +1,40 @@
+# Domains sind Platzhalter (example.com ist laut RFC 2606 für genau diesen
+# Zweck reserviert) - vor dem ersten Deploy durch die echte Domain ersetzen,
+# siehe docs/deployment.md. Caddy holt automatisch ein Let's-Encrypt-Zertifikat
+# pro Domain, sobald DNS auf den Server zeigt - kein manuelles TLS-Setup nötig.
+
+app.example.com {
+	# Wanderer-PWA. Der Client ruft relative Pfade unter /api auf (siehe
+	# apps/web/src/api/client.ts) - handle_path schneidet das Präfix ab, bevor
+	# es an den api-Container weitergereicht wird (der kennt kein /api-Präfix).
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv/web
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+rescue.example.com {
+	# Bergwacht-Dashboard, gleiches Muster wie oben.
+	handle_path /api/* {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv/dashboard
+		encode gzip
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+api.example.com {
+	# Direkter API-Zugriff für die native iOS-App (kein Proxy-Präfix dort,
+	# siehe VITE_API_BASE_URL in apps/web/.env.example).
+	reverse_proxy api:3000
+}

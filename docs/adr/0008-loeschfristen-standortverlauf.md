@@ -19,7 +19,7 @@ Zwei Randbedingungen aus bestehenden Entscheidungen schränken die Lösung ein:
 
 ## Verhältnis zu bestehenden Leitplanken
 
-- **Datensparsamkeit/DSGVO:** Die 7-Tage-Frist ist eine bewusste Abwägung zwischen "zeitnah" (CLAUDE.md) und einem Puffer für real verzögerte Vermisstenmeldungen, die selten am selben Tag eingehen. Der Hold-Mechanismus verhindert, dass dafür pauschal die Frist für *alle* Touren verlängert werden muss.
+- **Datensparsamkeit/DSGVO:** Die 7-Tage-Frist ist eine bewusste Abwägung zwischen "zeitnah" (CLAUDE.md) und einem Puffer für real verzögerte Vermisstenmeldungen, die selten am selben Tag eingehen. Der Hold-Mechanismus verhindert, dass dafür pauschal die Frist für _alle_ Touren verlängert werden muss.
 - **Bergwacht-Zugriff ist Pull, kein Push (ADR 0003):** Der Hold ist folgerichtig ebenfalls ein Pull-Vorgang – er setzt voraus, dass die Bergwacht die Tour bereits über die bestehende Suche gefunden hat, und automatisiert nichts darüber hinaus.
 - **Teilbarer Tour-Link (ADR 0006):** Die 7-Tage-Basisfrist liegt über der Link-Gültigkeit (aktiv + 24h), damit ein noch gültiger Link nie eine bereits teilweise gelöschte Historie zeigt.
 

@@ -1,0 +1,70 @@
+# Produktions-Stack für den VPS (ADR 0009). Liegt unter /opt/alpine-security/deploy
+# auf dem Server, wird vom GitHub-Actions-Deploy-Job per rsync aktuell gehalten.
+# Secrets kommen aus einer lokalen .env neben dieser Datei (siehe .env.example),
+# die NICHT im Repo liegt und vom Deploy-Job nicht angefasst wird.
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: alpine_security
+      POSTGRES_USER: alpine_security
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U alpine_security']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Kein Port-Mapping nach außen - nur api/flyway im selben Docker-Netz greifen zu.
+
+  flyway:
+    image: flyway/flyway:10
+    command:
+      - -url=jdbc:postgresql://postgres:5432/alpine_security
+      - -user=alpine_security
+      - -password=${POSTGRES_PASSWORD}
+      - -connectRetries=10
+      - migrate
+    volumes:
+      - ./migrations:/flyway/sql
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+
+  api:
+    image: ghcr.io/fligge37/alpine-security-api:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://alpine_security:${POSTGRES_PASSWORD}@postgres:5432/alpine_security
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # Kein Port-Mapping nach außen - Caddy erreicht den Container über den
+    # internen Docker-Netzwerknamen "api", genau wie im lokalen Dev-Setup über
+    # den Vite-Proxy, nur dass hier Caddy statt Vite die Rolle übernimmt.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./web-dist:/srv/web:ro
+      - ./dashboard-dist:/srv/dashboard:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:

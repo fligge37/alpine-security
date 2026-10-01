@@ -20,9 +20,7 @@ export async function deleteExpiredPings(now: Date = new Date()): Promise<number
   const expiredTours = await db
     .select({ id: tour.id })
     .from(tour)
-    .where(
-      and(eq(tour.status, 'beendet'), lt(tour.endedAt, cutoff), isNull(tour.retentionHoldAt)),
-    );
+    .where(and(eq(tour.status, 'beendet'), lt(tour.endedAt, cutoff), isNull(tour.retentionHoldAt)));
 
   if (expiredTours.length === 0) return 0;
 

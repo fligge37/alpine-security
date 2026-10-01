@@ -1,5 +1,8 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import type { BackgroundGeolocationPlugin, Location } from '@capacitor-community/background-geolocation';
+import type {
+  BackgroundGeolocationPlugin,
+  Location,
+} from '@capacitor-community/background-geolocation';
 import { sendPing } from './api/client';
 
 const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('BackgroundGeolocation');

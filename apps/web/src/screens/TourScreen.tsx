@@ -201,8 +201,7 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
           <h2 className={subheading}>Link für Angehörige</h2>
           <p className={hintText}>
             Wer diesen Link hat, sieht den bisherigen Tourverlauf – kein Live-Tracking, kein Ersatz
-            für den Notruf. Der Link funktioniert während der Tour und bis 24 Stunden nach
-            Tourende.
+            für den Notruf. Der Link funktioniert während der Tour und bis 24 Stunden nach Tourende.
           </p>
 
           {tour.shareToken ? (
@@ -221,7 +220,11 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
                 >
                   {shareCopied ? 'Kopiert!' : 'Link kopieren'}
                 </button>
-                <button className={buttonSecondary} onClick={handleRevokeShareLink} disabled={shareBusy}>
+                <button
+                  className={buttonSecondary}
+                  onClick={handleRevokeShareLink}
+                  disabled={shareBusy}
+                >
                   Widerrufen
                 </button>
               </div>

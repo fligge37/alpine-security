@@ -50,7 +50,10 @@ function ShareScreen({ token }: ShareScreenProps) {
       <p className={subheading}>{tour.status === 'aktiv' ? 'Tour aktiv' : 'Tour beendet'}</p>
       <p className={hintText}>
         Gestartet um{' '}
-        {new Date(tour.startedAt).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+        {new Date(tour.startedAt).toLocaleTimeString('de-DE', {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
         {tour.endedAt &&
           ` – beendet um ${new Date(tour.endedAt).toLocaleTimeString('de-DE', {
             hour: '2-digit',
@@ -61,7 +64,9 @@ function ShareScreen({ token }: ShareScreenProps) {
 
       {lastPoint ? (
         <>
-          <p className={hintText}>Letzter bekannter Standort: {formatRelativeTime(lastPoint.recordedAt)}.</p>
+          <p className={hintText}>
+            Letzter bekannter Standort: {formatRelativeTime(lastPoint.recordedAt)}.
+          </p>
           <ShareMap track={tour.track} />
         </>
       ) : (

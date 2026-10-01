@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+**/dist
+**/.turbo
+**/*.tsbuildinfo
+.git
+.github
+apps/web/ios
+apps/web/public
+deploy
+docs
+*.md

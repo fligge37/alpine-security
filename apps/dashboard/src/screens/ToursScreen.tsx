@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { getTours, holdTour, releaseTourHold, type RescueTour, type TourStatus } from '../api/client';
+import {
+  getTours,
+  holdTour,
+  releaseTourHold,
+  type RescueTour,
+  type TourStatus,
+} from '../api/client';
 import { formatRelativeTime } from '../relativeTime';
 import { button, buttonSecondary, errorText, heading, hintText, screen } from '../ui';
 import ToursMap from '../components/ToursMap';
@@ -30,7 +36,9 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
       setTours((prev) =>
         prev === 'loading'
           ? prev
-          : prev.map((x) => (x.id === t.id ? { ...x, retentionHoldAt: updated.retentionHoldAt } : x)),
+          : prev.map((x) =>
+              x.id === t.id ? { ...x, retentionHoldAt: updated.retentionHoldAt } : x,
+            ),
       );
     } catch {
       setError('Halten/Freigeben ist fehlgeschlagen.');

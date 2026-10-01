@@ -26,9 +26,22 @@ Ein Deployment ist damit kein optionaler nächster Schritt mehr, sondern eine Vo
 
 ## Offene Fragen (vor Umsetzung zu klären)
 
-- Welcher VPS-Anbieter konkret und welche Region (Datenschutz/DSGVO: EU-Serverstandort naheliegend angesichts der Datensparsamkeit-Leitplanke)
-- Domain + TLS-Einrichtung (z. B. Caddy oder Traefik mit automatischem Let's-Encrypt-Zertifikat)
-- Secrets-Management für Produktion (JWT-Secret, DB-Passwort, künftiger SMS-Provider-Key aus ADR 0005) – aktuell nur lokal per `.env`
-- CI/CD zum eigentlichen Ausrollen (z. B. GitHub Actions, das nach erfolgreichem Test/Lint/Typecheck automatisch auf den VPS deployt) vs. zunächst manuelles Deployment
-- Backup-Strategie für die Postgres-Daten (Frequenz, Aufbewahrungsdauer, Off-Site-Kopie, Restore-Test)
-- Wie `apps/web` nach dem Deployment auf die öffentliche API-Domain zeigt (Build-Zeit-Konfiguration von `VITE_API_BASE_URL` statt der bisherigen LAN-IP-Krücke)
+Beantwortet (siehe „Umsetzung" unten):
+
+- ~~Welcher VPS-Anbieter konkret und welche Region~~ → Hetzner Cloud, CX22, Nürnberg/Falkenstein
+- ~~Domain + TLS-Einrichtung~~ → Caddy als Reverse-Proxy mit automatischem Let's-Encrypt-Zertifikat
+- ~~CI/CD zum eigentlichen Ausrollen~~ → GitHub Actions
+- ~~Wie `apps/web` auf die öffentliche API-Domain zeigt~~ → eigene `api.<domain>`-Subdomain, `VITE_API_BASE_URL` bleibt manuell zu setzen (nur für native App relevant, siehe ADR 0007)
+
+Weiterhin offen:
+
+- Secrets-Management für Produktion über die Basis (`deploy/.env` direkt auf dem Server, siehe `docs/deployment.md`) hinaus – kein Secrets-Manager/Vault, bewusst minimal fürs MVP; künftiger SMS-Provider-Key aus ADR 0005 kommt in dieselbe Datei
+- Backup-Strategie für die Postgres-Daten (Frequenz, Aufbewahrungsdauer, Off-Site-Kopie, Restore-Test) – noch nicht umgesetzt, siehe „Umsetzung"
+
+## Umsetzung
+
+`apps/api/Dockerfile` (Multi-Stage-Build über `pnpm deploy` – der offizielle pnpm-Weg, ein einzelnes Workspace-Paket mit aufgelösten Prod-Dependencies ohne Monorepo-Symlink-Probleme in ein schlankes Image zu exportieren) plus `deploy/docker-compose.yml`, `deploy/Caddyfile` und `deploy/.env.example` als Produktions-Stack (Postgres+PostGIS, Flyway als einmaliger Migrations-Job, API-Container, Caddy). `apps/web` und `apps/dashboard` werden als statische Builds direkt von Caddy ausgeliefert, nicht als eigene Container. Drei Subdomains (`app.`/`rescue.`/`api.<domain>`), jeweils per `handle_path /api/*` gegen den API-Container geroutet – passt zum bestehenden Muster, dass beide Frontends schon jetzt relative `/api`-Pfade verwenden (siehe CLAUDE.md, Vite-Dev-Proxy).
+
+CI/CD in einem GitHub-Actions-Workflow (`.github/workflows/ci-cd.yml`): bei jedem Push/PR Lint, Format-Check, Typecheck, API-Tests gegen einen echten Postgres+PostGIS-Service-Container (kein Mocking – konsistent mit der bestehenden Testphilosophie, siehe CLAUDE.md) sowie ein Docker-Image-Build als Smoke-Test (ohne Push in die Registry). Deployment ist davon bewusst entkoppelt: bei Solo-Arbeit ohne Branch-Modell landet auch unfertiger Code auf `main`, ein Deploy bei jedem Push wäre deshalb ungewollt. Tatsächlich deployed wird nur, wenn ein Commit mit einem `v*`-Tag versehen wird, oder manuell über den „Run workflow"-Knopf in der GitHub-Actions-UI (dort lässt sich der Branch/Tag auswählen) – dann zusätzlich Docker-Image-Push nach GHCR, Web/Dashboard-Build und Rollout auf den VPS per SSH/rsync (Dateien kopieren, Migrationen ausführen, `docker compose up -d`). Die einmaligen manuellen Vorbereitungsschritte (Server anlegen, DNS, GHCR-Login auf dem Server, GitHub Secrets) sind in `docs/deployment.md` festgehalten, da sie außerhalb dessen liegen, was sich im Repo automatisieren lässt.
+
+Noch nicht umgesetzt: Backup-Strategie für Postgres (weiterhin offen, siehe oben) und die Einplanung des Löschfrist-Scripts aus ADR 0008 als Cron-Job auf dem neuen Server (naheliegender nächster Schritt, jetzt, wo der fehlende Infra-Baustein aus CLAUDE.md "Offene Punkte" nicht mehr fehlt).
