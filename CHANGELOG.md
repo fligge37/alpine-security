@@ -83,3 +83,7 @@ Fortlaufendes Protokoll der umgesetzten Schritte – chronologisch, wird nur erg
 ## 2026-09-22
 
 - [ADR 0009](docs/adr/0009-deployment-vps-docker-compose.md): Deployment entschieden – einzelner VPS mit Docker Compose (gleiches Modell wie lokal), Postgres+PostGIS selbst gehostet statt Managed-DB, nur eine Umgebung fürs MVP; Anbieter/Region, TLS, Secrets-Management, CI/CD und Backup-Strategie bewusst als offene Fragen vor der eigentlichen Umsetzung festgehalten. Ausgelöst durch die beim iPhone-Test aufgefallene LAN-IP-Krücke (siehe Eintrag oben) sowie die bereits länger offenen Punkte CI-Pipeline und Cron für die Löschfrist aus ADR 0008, die beide am selben fehlenden Infra-Baustein hängen
+
+## 2026-10-08
+
+- VPS-Anbieter vor dem ersten tatsächlichen Server-Anlegen von Hetzner auf IONOS gewechselt: die in [ADR 0009](docs/adr/0009-deployment-vps-docker-compose.md) angenommene Preisbasis (Hetzner CX22, ~4 €/Monat) war nicht mehr aktuell – Hetzner hatte die Shared-vCPU-Linie umgebaut, der günstigste verfügbare Server lag bei 13,67 €/Monat. IONOS VPS S+ (1 vCPU, 2 GB RAM) bietet für denselben Bedarf 5 €/Monat im Regelpreis, ebenfalls mit deutschem Rechenzentrum (DSGVO-Leitplanke weiterhin erfüllt). Architektur/Umsetzung aus ADR 0009 unverändert (provider-agnostisch: Ubuntu-Root-Server, Docker Compose, Caddy, GitHub Actions) – siehe Update-Abschnitt in ADR 0009 sowie angepasstes [docs/deployment.md](docs/deployment.md) (Schritt 1)

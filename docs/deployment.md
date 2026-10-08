@@ -1,19 +1,21 @@
 # Deployment
 
-Umsetzung von [ADR 0009](adr/0009-deployment-vps-docker-compose.md): ein Hetzner-VPS mit Docker Compose,
+Umsetzung von [ADR 0009](adr/0009-deployment-vps-docker-compose.md): ein VPS mit Docker Compose,
 automatisch bespielt über den GitHub-Actions-Workflow [`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml).
 Dieses Dokument beschreibt die einmaligen manuellen Schritte, die vor dem ersten automatischen Deploy nötig sind
-(Server anlegen, DNS, Secrets) - Claude Code kann diese nicht selbst ausführen (kein Zugriff auf Hetzner-Konto,
+(Server anlegen, DNS, Secrets) - Claude Code kann diese nicht selbst ausführen (kein Zugriff auf IONOS-Konto,
 Domain-Verwaltung oder GitHub-Repo-Settings).
 
 ## 1. Server anlegen
 
-- Hetzner Cloud, Server-Typ **CX22** (2 vCPU, 4 GB RAM, ~4 €/Monat) reicht für API + Postgres/PostGIS +
-  zwei statische Frontends bei diesem Nutzungsumfang.
-- Region: Nürnberg oder Falkenstein (Deutschland) - passt zur DSGVO-Leitplanke aus CLAUDE.md.
+- IONOS, Produktlinie **VPS** (nicht "Cloud Server"/IaaS - das ist eine andere, teurere Linie), Tarif
+  **VPS S+** (1 vCPU, 2 GB RAM, 60 GB SSD, 5 €/Monat im Regelpreis nach der 3-monatigen Einführungsphase)
+  reicht für API + Postgres/PostGIS + zwei statische Frontends bei diesem Nutzungsumfang (siehe ADR 0009,
+  Update vom 2026-10-08, zur Preisbegründung und zum ursprünglich geplanten Hetzner-Server). Falls der RAM
+  im Betrieb zu knapp wird, Upgrade auf VPS M+ (2 vCPU/4 GB, 12 €/Monat) über das IONOS-Kundencenter möglich.
+- Rechenzentrum: ein deutscher Standort - passt zur DSGVO-Leitplanke aus CLAUDE.md.
 - Image: Ubuntu 24.04, beim Anlegen den eigenen SSH-Public-Key hinterlegen (kein Passwort-Login).
-- Docker installieren (Hetzner bietet dafür auch ein fertiges "Docker CE"-App-Image beim Server-Erstellen an,
-  alternativ nach dem ersten Login `curl -fsSL https://get.docker.com | sh`).
+- Docker installieren (nach dem ersten Login per SSH: `curl -fsSL https://get.docker.com | sh`).
 
 ## 2. DNS
 
