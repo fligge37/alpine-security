@@ -182,7 +182,7 @@ jobs:
           ssh -o StrictHostKeyChecking=accept-new "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" '
             set -e
             cd /opt/alpine-security/deploy
-            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=${{ github.sha }}/" .env
+            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=sha-${{ github.sha }}/" .env
             docker compose --env-file .env pull api
             docker compose --env-file .env run --rm flyway
             docker compose --env-file .env up -d
