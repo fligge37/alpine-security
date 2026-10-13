@@ -1,8 +1,9 @@
 import { Type } from '@sinclair/typebox';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import bcrypt from 'bcryptjs';
-import { desc, eq, sql } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 import { db } from '../db/client.js';
+import { getPingTrack } from '../db/queries.js';
 import { appUser, rescueOrgMember, tour } from '../db/schema.js';
 import { requireRescue } from '../plugins/auth.js';
 
@@ -18,33 +19,6 @@ const ToursQuery = Type.Object({
 const TourIdParams = Type.Object({
   id: Type.String({ format: 'uuid' }),
 });
-
-interface LatestPingRow extends Record<string, unknown> {
-  recorded_at: string;
-  latitude: number;
-  longitude: number;
-  accuracy_meters: string | null;
-}
-
-async function getLatestPing(tourId: string) {
-  const result = await db.execute<LatestPingRow>(sql`
-    SELECT recorded_at, ST_Y(location::geometry) AS latitude, ST_X(location::geometry) AS longitude, accuracy_meters
-    FROM location_ping
-    WHERE tour_id = ${tourId}
-    ORDER BY recorded_at DESC
-    LIMIT 1
-  `);
-
-  const row = result.rows[0];
-  if (!row) return null;
-
-  return {
-    recordedAt: row.recorded_at,
-    latitude: row.latitude,
-    longitude: row.longitude,
-    accuracyMeters: row.accuracy_meters ? Number(row.accuracy_meters) : null,
-  };
-}
 
 const rescueRoutes: FastifyPluginAsyncTypebox = async (server) => {
   server.post('/rescue/login', { schema: { body: LoginBody } }, async (request, reply) => {
@@ -95,11 +69,14 @@ const rescueRoutes: FastifyPluginAsyncTypebox = async (server) => {
         .where(eq(tour.status, status))
         .orderBy(desc(tour.startedAt));
 
-      const withLastPing = await Promise.all(
-        tours.map(async (t) => ({ ...t, lastPing: await getLatestPing(t.id) })),
+      const withTrack = await Promise.all(
+        tours.map(async (t) => {
+          const track = await getPingTrack(t.id);
+          return { ...t, track, lastPing: track.length > 0 ? track[track.length - 1] : null };
+        }),
       );
 
-      return reply.send(withLastPing);
+      return reply.send(withTrack);
     },
   );
 

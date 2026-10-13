@@ -19,11 +19,30 @@ function boundsForTours(tours: RescueTour[]): maplibregl.LngLatBounds | null {
 
   const bounds = new maplibregl.LngLatBounds();
   for (const t of toursWithLocation) {
-    if (t.lastPing) {
-      bounds.extend([t.lastPing.longitude, t.lastPing.latitude]);
+    for (const point of t.track) {
+      bounds.extend([point.longitude, point.latitude]);
     }
   }
   return bounds;
+}
+
+// Eine Linie pro Tour statt einer durchgehenden - sonst würde MapLibre zwischen den Touren
+// querfeldein verbindende Linien zeichnen. Touren mit nur einem Ping ergeben keine sinnvolle
+// Linie und werden ausgelassen (der Marker zeigt sie trotzdem).
+function tracksGeoJson(tours: RescueTour[]) {
+  return {
+    type: 'FeatureCollection' as const,
+    features: tours
+      .filter((t) => t.track.length > 1)
+      .map((t) => ({
+        type: 'Feature' as const,
+        properties: { status: t.status },
+        geometry: {
+          type: 'LineString' as const,
+          coordinates: t.track.map((point) => [point.longitude, point.latitude] as [number, number]),
+        },
+      })),
+  };
 }
 
 // Eigenes Control statt eines Fix-Aufrufs bei jedem Daten-Update: Nutzer sollen die Karte frei
@@ -97,6 +116,17 @@ function ToursMap({ tours }: ToursMapProps) {
         encoding: 'terrarium',
       });
       map.setTerrain({ source: 'terrain', exaggeration: 1.3 });
+
+      map.addSource('tracks', { type: 'geojson', data: tracksGeoJson(toursRef.current) });
+      map.addLayer({
+        id: 'tracks-line',
+        type: 'line',
+        source: 'tracks',
+        paint: {
+          'line-color': ['match', ['get', 'status'], 'aktiv', '#1b2a41', '#94a3b8'],
+          'line-width': 3,
+        },
+      });
     });
 
     mapRef.current = map;
@@ -110,6 +140,9 @@ function ToursMap({ tours }: ToursMapProps) {
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
+    const tracksSource = map.getSource<maplibregl.GeoJSONSource>('tracks');
+    tracksSource?.setData(tracksGeoJson(tours));
 
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];

@@ -28,6 +28,7 @@ export interface RescueTour {
   phoneNumber: string;
   displayName: string | null;
   lastPing: LastPing | null;
+  track: LastPing[];
 }
 
 export function getToken(): string | null {

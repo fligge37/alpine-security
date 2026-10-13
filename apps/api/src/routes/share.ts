@@ -1,8 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { Type } from '@sinclair/typebox';
 import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
-import { and, eq, gt, or, sql } from 'drizzle-orm';
+import { and, eq, gt, or } from 'drizzle-orm';
 import { db } from '../db/client.js';
+import { getPingTrack } from '../db/queries.js';
 import { appUser, tour } from '../db/schema.js';
 import { requireUser } from '../plugins/auth.js';
 
@@ -23,29 +24,6 @@ const ShareTokenParams = Type.Object({
 // Bruteforcing der Link-ID (ADR 0006), kein sequentielles Format.
 function generateShareToken(): string {
   return randomBytes(24).toString('base64url');
-}
-
-interface PingRow extends Record<string, unknown> {
-  recorded_at: string;
-  latitude: number;
-  longitude: number;
-  accuracy_meters: string | null;
-}
-
-async function getPingTrack(tourId: string) {
-  const result = await db.execute<PingRow>(sql`
-    SELECT recorded_at, ST_Y(location::geometry) AS latitude, ST_X(location::geometry) AS longitude, accuracy_meters
-    FROM location_ping
-    WHERE tour_id = ${tourId}
-    ORDER BY recorded_at ASC
-  `);
-
-  return result.rows.map((row) => ({
-    recordedAt: row.recorded_at,
-    latitude: row.latitude,
-    longitude: row.longitude,
-    accuracyMeters: row.accuracy_meters ? Number(row.accuracy_meters) : null,
-  }));
 }
 
 const shareRoutes: FastifyPluginAsyncTypebox = async (server) => {
