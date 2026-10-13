@@ -1,40 +1,47 @@
-# Domains sind Platzhalter (example.com ist laut RFC 2606 für genau diesen
-# Zweck reserviert) - vor dem ersten Deploy durch die echte Domain ersetzen,
-# siehe docs/deployment.md. Caddy holt automatisch ein Let's-Encrypt-Zertifikat
-# pro Domain, sobald DNS auf den Server zeigt - kein manuelles TLS-Setup nötig.
+# PROVISORISCH (siehe docs/deployment.md, Schritt 2 und ADR 0009-Update vom 2026-10-13):
+# noch keine eigene Domain gekauft, daher läuft hier nur die API hinter dem von IONOS
+# automatisch vergebenen Hostnamen - web/dashboard sind noch nicht öffentlich deployed.
+# Sobald eine echte Domain existiert: diesen Block durch die drei auskommentierten
+# Domain-Blöcke unten ersetzen (example.com darin durch die echte Domain ersetzen).
 
-app.example.com {
-	# Wanderer-PWA. Der Client ruft relative Pfade unter /api auf (siehe
-	# apps/web/src/api/client.ts) - handle_path schneidet das Präfix ab, bevor
-	# es an den api-Container weitergereicht wird (der kennt kein /api-Präfix).
-	handle_path /api/* {
-		reverse_proxy api:3000
-	}
-
-	handle {
-		root * /srv/web
-		encode gzip
-		try_files {path} /index.html
-		file_server
-	}
-}
-
-rescue.example.com {
-	# Bergwacht-Dashboard, gleiches Muster wie oben.
-	handle_path /api/* {
-		reverse_proxy api:3000
-	}
-
-	handle {
-		root * /srv/dashboard
-		encode gzip
-		try_files {path} /index.html
-		file_server
-	}
-}
-
-api.example.com {
-	# Direkter API-Zugriff für die native iOS-App (kein Proxy-Präfix dort,
-	# siehe VITE_API_BASE_URL in apps/web/.env.example).
+06yre4t.cserverhost.cloud {
 	reverse_proxy api:3000
 }
+
+# Ziel-Setup mit eigener Domain (aktuell inaktiv):
+#
+# app.example.com {
+# 	# Wanderer-PWA. Der Client ruft relative Pfade unter /api auf (siehe
+# 	# apps/web/src/api/client.ts) - handle_path schneidet das Präfix ab, bevor
+# 	# es an den api-Container weitergereicht wird (der kennt kein /api-Präfix).
+# 	handle_path /api/* {
+# 		reverse_proxy api:3000
+# 	}
+#
+# 	handle {
+# 		root * /srv/web
+# 		encode gzip
+# 		try_files {path} /index.html
+# 		file_server
+# 	}
+# }
+#
+# rescue.example.com {
+# 	# Bergwacht-Dashboard, gleiches Muster wie oben.
+# 	handle_path /api/* {
+# 		reverse_proxy api:3000
+# 	}
+#
+# 	handle {
+# 		root * /srv/dashboard
+# 		encode gzip
+# 		try_files {path} /index.html
+# 		file_server
+# 	}
+# }
+#
+# api.example.com {
+# 	# Direkter API-Zugriff für die native iOS-App (kein Proxy-Präfix dort,
+# 	# siehe VITE_API_BASE_URL in apps/web/.env.example).
+# 	reverse_proxy api:3000
+# }

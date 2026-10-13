@@ -14,20 +14,37 @@ Domain-Verwaltung oder GitHub-Repo-Settings).
   Update vom 2026-10-08, zur Preisbegründung und zum ursprünglich geplanten Hetzner-Server). Falls der RAM
   im Betrieb zu knapp wird, Upgrade auf VPS M+ (2 vCPU/4 GB, 12 €/Monat) über das IONOS-Kundencenter möglich.
 - Rechenzentrum: ein deutscher Standort - passt zur DSGVO-Leitplanke aus CLAUDE.md.
-- Image: Ubuntu 24.04, beim Anlegen den eigenen SSH-Public-Key hinterlegen (kein Passwort-Login).
-- Docker installieren (nach dem ersten Login per SSH: `curl -fsSL https://get.docker.com | sh`).
+- Image: **Ubuntu 26.04 + Docker** (aktuelles LTS, Docker bereits vorinstalliert), beim Anlegen den eigenen
+  SSH-Public-Key hinterlegen (kein Passwort-Login). Nach dem ersten Login einmal `docker compose version`
+  prüfen - der Deploy-Workflow nutzt die Compose-v2-Syntax (`docker compose`, nicht `docker-compose`);
+  fehlt das Plugin, offizielles Docker-Repo nachinstallieren: `curl -fsSL https://get.docker.com | sh`.
+- **Kein SSL-Zertifikat dazubuchen** (IONOS "SSL Starter" o. Ä.): Caddy holt sich die Zertifikate
+  automatisch und kostenlos von Let's Encrypt, inklusive Erneuerung (siehe Schritt 6).
+- In der IONOS-Firewall **Port 80 und 443 eingehend freigeben** - Port 80 wird nicht nur für die
+  HTTP→HTTPS-Weiterleitung gebraucht, sondern auch für die ACME-Challenge beim Zertifikatsabruf.
 
 ## 2. DNS
 
-Drei A-Records auf die Server-IP, für die drei Domains aus [`deploy/Caddyfile`](../deploy/Caddyfile):
+**Aktuell (Provisorium, siehe ADR 0009-Update vom 2026-10-13):** noch keine eigene Domain gekauft - bewusste
+Entscheidung, um erstmal ohne Vertrag/laufende Zusatzkosten auf echten Touren testen zu können. Stattdessen
+läuft [`deploy/Caddyfile`](../deploy/Caddyfile) aktuell nur mit dem automatisch von IONOS vergebenen
+Hostnamen des Servers (z. B. `06yre4t.cserverhost.cloud`, im Kundencenter bei den Server-Details sichtbar) -
+der zeigt schon per DNS auf die Server-IP, zusätzliche DNS-Einträge sind dafür nicht nötig. Eingeschränkt auf
+die API, da das der eigentliche Blocker für den Gerätetest ist (siehe ADR 0009, "Für einen realistischen Test
+unterwegs braucht es eine über das Internet erreichbare API"); `apps/dashboard` bleibt für Kontrollzwecke
+vorerst lokal (`pnpm --filter dashboard dev`, Vite-Proxy-Ziel auf den Hostnamen umgestellt statt
+`localhost:3000`), `apps/web` wird nicht öffentlich deployed, da die native App ihr Web-Bundle schon enthält.
+
+**Später, sobald eine Domain gekauft ist:** drei A-Records auf die Server-IP, für die drei Domains aus dem
+in `deploy/Caddyfile` bereits vorbereiteten (aktuell auskommentierten) Ziel-Setup:
 
 - `app.<deine-domain>` → Wanderer-PWA
 - `rescue.<deine-domain>` → Bergwacht-Dashboard
 - `api.<deine-domain>` → direkter API-Zugriff (auch für die native iOS-App, siehe `VITE_API_BASE_URL`)
 
-`deploy/Caddyfile` enthält aktuell `example.com` als Platzhalter (laut RFC 2606 extra für sowas reserviert) -
-vor dem ersten Deploy im Repo durch die echten Domains ersetzen und committen, der Deploy-Workflow kopiert die
-Datei bei jedem Durchlauf auf den Server.
+Dann im Repo den provisorischen Hostnamen-Block in `deploy/Caddyfile` durch die auskommentierten
+Domain-Blöcke ersetzen (`example.com` darin durch die echten Domains) und committen - der Deploy-Workflow
+kopiert die Datei bei jedem Durchlauf auf den Server.
 
 ## 3. Verzeichnis + Secrets auf dem Server
 
@@ -82,17 +99,20 @@ auch mal unfertiger Code; ein automatischer Deploy bei jedem Push wäre deshalb 
 
 Beide Wege durchlaufen den vollen Workflow: Lint/Typecheck/Tests → Docker-Image bauen & nach GHCR pushen →
 `apps/web`/`apps/dashboard` bauen → alles per `rsync` auf den Server kopieren → per SSH Migrationen ausführen
-und `docker compose up -d`. Caddy holt sich beim ersten Start automatisch Let's-Encrypt-Zertifikate für die
-drei Domains (setzt voraus, dass die DNS-Einträge aus Schritt 2 schon aktiv sind).
+und `docker compose up -d`. Caddy holt sich beim ersten Start automatisch ein Let's-Encrypt-Zertifikat -
+aktuell (Provisorium) für den einen IONOS-Hostnamen, später für die drei eigenen Domains (setzt jeweils
+voraus, dass die DNS-Einträge aus Schritt 2 schon aktiv sind - beim Hostnamen automatisch der Fall).
 
-Kontrolle danach: `https://app.<domain>/api/health`, `https://rescue.<domain>`, `https://api.<domain>/health`
-sollten erreichbar sein, jeweils mit gültigem Zertifikat.
+Kontrolle danach: aktuell `https://<ionos-hostname>/health` (Provisorium); sobald die eigene Domain aktiv
+ist, `https://app.<domain>/api/health`, `https://rescue.<domain>`, `https://api.<domain>/health` - jeweils
+mit gültigem Zertifikat.
 
 ## Bewusst nicht Teil dieses Schritts
 
 - **Backup-Strategie für Postgres** - in ADR 0009 als offene Frage benannt, hier nicht mit entschieden.
   Bis dahin: kein automatisches Backup, ein VPS-Totalausfall bedeutet Datenverlust.
 - **Staging-Umgebung** - MVP-Entscheidung laut ADR 0009, nur eine Umgebung.
-- **`apps/web/.env` für die native iOS-App** - `VITE_API_BASE_URL` muss lokal auf `https://api.<domain>`
-  gesetzt werden, bevor man `pnpm --filter web cap:sync` für einen echten Gerätetest laufen lässt; das ist
-  ein manueller lokaler Schritt (ADR 0007), keine Automatisierung über diesen Workflow.
+- **`apps/web/.env` für die native iOS-App** - `VITE_API_BASE_URL` muss lokal gesetzt werden, bevor man
+  `pnpm --filter web cap:sync` für einen echten Gerätetest laufen lässt (aktuell, Provisorium: der
+  IONOS-Hostname; später: `https://api.<domain>`); das ist ein manueller lokaler Schritt (ADR 0007), keine
+  Automatisierung über diesen Workflow.

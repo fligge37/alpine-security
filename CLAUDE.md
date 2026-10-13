@@ -32,6 +32,7 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 
 ## Offene Punkte
 
+- Deployment läuft aktuell provisorisch ohne eigene Domain: nur `apps/api` ist über den von IONOS automatisch vergebenen Hostnamen öffentlich erreichbar, `apps/dashboard`/`apps/web` sind nicht deployed (siehe ADR 0009, Update vom 2026-10-13, und [docs/deployment.md](docs/deployment.md)). Umstellung auf die eigentlich vorgesehenen drei Subdomains folgt, sobald eine Domain gekauft ist.
 - SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, siehe ADR 0005)
 - `GET /rescue/tours` filtert noch nicht nach `region` (nur eine Region im MVP, siehe ADR 0003)
 - Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
