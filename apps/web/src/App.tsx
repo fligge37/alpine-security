@@ -22,7 +22,15 @@ function App() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col bg-slate-100 text-slate-800">
+    <main
+      className="mx-auto flex min-h-screen max-w-md flex-col bg-slate-100 text-slate-800"
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+        paddingRight: 'env(safe-area-inset-right)',
+      }}
+    >
       <div className="bg-slate-800 px-4 py-3 text-center text-sm text-white">
         Kein Ersatz für den Notruf. Im Notfall die 112 wählen.
       </div>
