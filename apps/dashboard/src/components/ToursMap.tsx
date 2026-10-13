@@ -39,7 +39,9 @@ function tracksGeoJson(tours: RescueTour[]) {
         properties: { status: t.status },
         geometry: {
           type: 'LineString' as const,
-          coordinates: t.track.map((point) => [point.longitude, point.latitude] as [number, number]),
+          coordinates: t.track.map(
+            (point) => [point.longitude, point.latitude] as [number, number],
+          ),
         },
       })),
   };
