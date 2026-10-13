@@ -19,11 +19,48 @@ Domain-Verwaltung oder GitHub-Repo-Settings).
   prüfen - der Deploy-Workflow nutzt die Compose-v2-Syntax (`docker compose`, nicht `docker-compose`);
   fehlt das Plugin, offizielles Docker-Repo nachinstallieren: `curl -fsSL https://get.docker.com | sh`.
 - **Kein SSL-Zertifikat dazubuchen** (IONOS "SSL Starter" o. Ä.): Caddy holt sich die Zertifikate
-  automatisch und kostenlos von Let's Encrypt, inklusive Erneuerung (siehe Schritt 6).
+  automatisch und kostenlos von Let's Encrypt, inklusive Erneuerung (siehe Schritt 7).
 - In der IONOS-Firewall **Port 80 und 443 eingehend freigeben** - Port 80 wird nicht nur für die
   HTTP→HTTPS-Weiterleitung gebraucht, sondern auch für die ACME-Challenge beim Zertifikatsabruf.
 
-## 2. DNS
+## 2. Deploy-User anlegen
+
+GitHub Actions soll nicht als `root` auf dem Server deployen. Stattdessen einmalig (als `root`, direkt
+nach dem ersten Login) einen eigenen `deploy`-User anlegen:
+
+```
+adduser --disabled-password --gecos "" deploy
+usermod -aG docker deploy
+mkdir -p /home/deploy/.ssh
+chmod 700 /home/deploy/.ssh
+```
+
+Separates SSH-Keypair **nur für diesen Deploy-User** erzeugen - nicht den eigenen persönlichen Key
+wiederverwenden, damit das Secret in GitHub unabhängig von deinem eigenen Zugang rotiert/widerrufen werden
+kann (lokal ausführen, nicht auf dem Server):
+
+```
+ssh-keygen -t ed25519 -f ~/.ssh/deploy_alpine_security -C "github-actions-deploy" -N ""
+```
+
+Den Inhalt von `deploy_alpine_security.pub` auf dem Server hinterlegen:
+
+```
+echo "<Inhalt von deploy_alpine_security.pub>" > /home/deploy/.ssh/authorized_keys
+chmod 600 /home/deploy/.ssh/authorized_keys
+chown -R deploy:deploy /home/deploy/.ssh
+```
+
+`usermod -aG docker deploy` ist der entscheidende Schritt: nur `root` und Mitglieder der `docker`-Gruppe
+dürfen den Docker-Daemon ansprechen, ohne das bräuchte der Workflow `sudo` - das wäre wieder effektiv
+Root-Zugriff. Mitgliedschaft in der `docker`-Gruppe ist zwar faktisch root-äquivalent (Zugriff auf den
+Docker-Socket erlaubt u. a. beliebige Host-Mounts), aber für dieses Solo-VPS ein akzeptabler Trade-off und
+klar besser als SSH direkt als `root`.
+
+Der Inhalt von `deploy_alpine_security` (privater Key, **nicht** `.pub`) wird später unter Schritt 6 als
+GitHub-Secret `VPS_SSH_KEY` hinterlegt.
+
+## 3. DNS
 
 **Aktuell (Provisorium, siehe ADR 0009-Update vom 2026-10-13):** noch keine eigene Domain gekauft - bewusste
 Entscheidung, um erstmal ohne Vertrag/laufende Zusatzkosten auf echten Touren testen zu können. Stattdessen
@@ -46,12 +83,15 @@ Dann im Repo den provisorischen Hostnamen-Block in `deploy/Caddyfile` durch die 
 Domain-Blöcke ersetzen (`example.com` darin durch die echten Domains) und committen - der Deploy-Workflow
 kopiert die Datei bei jedem Durchlauf auf den Server.
 
-## 3. Verzeichnis + Secrets auf dem Server
+## 4. Verzeichnis + Secrets auf dem Server
 
 ```
-ssh <user>@<server-ip>
+ssh deploy@<server-ip>
 mkdir -p /opt/alpine-security/deploy
 ```
+
+(Verzeichnis gehört dem `deploy`-User, der es anlegt - kein zusätzliches `chown` nötig, solange alle
+folgenden Schritte ebenfalls als `deploy` laufen.)
 
 `deploy/.env` **auf dem Server** anlegen (liegt nicht im Repo, wird vom Deploy-Workflow nie überschrieben):
 
@@ -61,28 +101,29 @@ JWT_SECRET=<mit z.B. openssl rand -base64 32 erzeugen>
 IMAGE_TAG=latest
 ```
 
-## 4. GHCR-Zugriff auf dem Server
+## 5. GHCR-Zugriff auf dem Server
 
 Der Deploy-Job baut das API-Image und pusht es nach GitHub Container Registry (`ghcr.io`) - standardmäßig
 privat. Damit der Server es pullen kann, einmalig auf dem Server einloggen:
 
 1. Auf GitHub ein Personal Access Token (classic) mit Scope `read:packages` erzeugen.
-2. Auf dem Server: `docker login ghcr.io -u <github-username>` und das Token als Passwort eingeben.
+2. Auf dem Server (als `deploy`, da `docker compose up` im Workflow ebenfalls als `deploy` läuft):
+   `docker login ghcr.io -u <github-username>` und das Token als Passwort eingeben.
 
 Alternativ: das Package nach dem ersten Push unter github.com/fligge37/alpine-security/pkgs/container/alpine-security-api
 auf "Public" stellen, dann entfällt der Login auf dem Server. Bei einer sicherheitsnahen App eher nicht empfehlenswert,
 auch wenn im Image selbst keine Geheimnisse stecken (Secrets kommen erst zur Laufzeit aus `deploy/.env`).
 
-## 5. GitHub Actions Secrets
+## 6. GitHub Actions Secrets
 
 Im Repo unter Settings → Secrets and variables → Actions:
 
 - `VPS_HOST` - IP oder Hostname des Servers
-- `VPS_USER` - SSH-Benutzer (z. B. `root` oder ein eigens angelegter Deploy-User)
-- `VPS_SSH_KEY` - privater SSH-Schlüssel, dessen öffentliches Gegenstück auf dem Server unter
-  `~/.ssh/authorized_keys` des `VPS_USER` liegt
+- `VPS_USER` - `deploy` (siehe Schritt 2; nicht `root`)
+- `VPS_SSH_KEY` - Inhalt der privaten Key-Datei `deploy_alpine_security` aus Schritt 2 (nicht `.pub`),
+  deren öffentliches Gegenstück dort bereits in `~/.ssh/authorized_keys` des `deploy`-Users liegt
 
-## 6. Erster Durchlauf
+## 7. Erster Durchlauf
 
 Jeder Push nach `main` und jeder PR stößt Lint/Format-Check/Typecheck/Tests sowie einen Docker-Image-Build
 als Smoke-Test an – aber noch keinen Deploy. Da hier allein ohne Branches gearbeitet wird, landet auf `main`
@@ -101,7 +142,7 @@ Beide Wege durchlaufen den vollen Workflow: Lint/Typecheck/Tests → Docker-Imag
 `apps/web`/`apps/dashboard` bauen → alles per `rsync` auf den Server kopieren → per SSH Migrationen ausführen
 und `docker compose up -d`. Caddy holt sich beim ersten Start automatisch ein Let's-Encrypt-Zertifikat -
 aktuell (Provisorium) für den einen IONOS-Hostnamen, später für die drei eigenen Domains (setzt jeweils
-voraus, dass die DNS-Einträge aus Schritt 2 schon aktiv sind - beim Hostnamen automatisch der Fall).
+voraus, dass die DNS-Einträge aus Schritt 3 schon aktiv sind - beim Hostnamen automatisch der Fall).
 
 Kontrolle danach: aktuell `https://<ionos-hostname>/health` (Provisorium); sobald die eigene Domain aktiv
 ist, `https://app.<domain>/api/health`, `https://rescue.<domain>`, `https://api.<domain>/health` - jeweils
