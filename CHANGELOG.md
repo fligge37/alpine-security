@@ -2,6 +2,10 @@
 
 Fortlaufendes Protokoll der umgesetzten Schritte – chronologisch, wird nur ergänzt, nicht überschrieben. Für den aktuellen Ist-Zustand siehe [CLAUDE.md](CLAUDE.md), für Architekturentscheidungen samt Begründung siehe [docs/adr/](docs/adr/).
 
+## 2026-10-13
+
+- Vorbereitung für den geplanten Feldtest auf dem neuen IONOS-Server (siehe Eintrag vom 2026-10-08): `apps/dashboard/vite.config.ts`-Proxy-Ziel auf Nutzerwunsch über `VITE_API_PROXY_TARGET` konfigurierbar gemacht (Default weiterhin `localhost:3000`) statt eines Wegwerf-Edits, da gegen den Server getestetes Dashboard ein wiederkehrender Bedarf ist – neues `apps/dashboard/.env.example` dokumentiert die Variable, analog zum bestehenden Muster in `apps/web/.env.example`
+
 ## 2026-09-10
 
 - Projekt-Grundgerüst: pnpm-Workspace-Monorepo mit `apps/web` (React/Vite PWA), `apps/dashboard` (React/Vite/Refine), `apps/api` (Fastify), `packages/shared-types`; gemeinsames TypeScript-/ESLint-/Prettier-Setup
