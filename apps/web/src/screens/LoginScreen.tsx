@@ -58,6 +58,7 @@ function LoginScreen({ onLoggedIn }: LoginScreenProps) {
           className={input}
           type="tel"
           inputMode="tel"
+          autoComplete="tel"
           placeholder="+49 151 23456789"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
@@ -83,6 +84,7 @@ function LoginScreen({ onLoggedIn }: LoginScreenProps) {
         className={input}
         type="text"
         inputMode="numeric"
+        autoComplete="one-time-code"
         pattern="[0-9]{6}"
         maxLength={6}
         value={code}

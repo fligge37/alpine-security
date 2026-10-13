@@ -21,6 +21,17 @@ interface QueuedPing {
 let watcherId: string | null = null;
 let activeTourId: string | null = null;
 let lastSentAt: number | null = null;
+let watcherStartedAt: number | null = null;
+
+export interface TrackingStatus {
+  active: boolean;
+  startedAt: number | null;
+  lastSentAt: number | null;
+}
+
+export function getTrackingStatus(): TrackingStatus {
+  return { active: watcherId !== null, startedAt: watcherStartedAt, lastSentAt };
+}
 
 function readQueue(): QueuedPing[] {
   try {
@@ -98,6 +109,7 @@ export async function startBackgroundTracking(tourId: string): Promise<void> {
 
   activeTourId = tourId;
   lastSentAt = null;
+  watcherStartedAt = Date.now();
 
   watcherId = await BackgroundGeolocation.addWatcher(
     {
@@ -123,4 +135,5 @@ export async function stopBackgroundTracking(): Promise<void> {
   watcherId = null;
   activeTourId = null;
   lastSentAt = null;
+  watcherStartedAt = null;
 }

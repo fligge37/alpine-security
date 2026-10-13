@@ -9,10 +9,18 @@ import {
   startTour,
   type Tour,
 } from '../api/client';
-import { startBackgroundTracking, stopBackgroundTracking } from '../backgroundTracking';
+import {
+  getTrackingStatus,
+  startBackgroundTracking,
+  stopBackgroundTracking,
+  type TrackingStatus,
+} from '../backgroundTracking';
+import Spinner from '../components/Spinner';
 import { getCurrentPosition } from '../geolocation';
+import { formatRelativeTime } from '../relativeTime';
 import {
   button,
+  buttonDanger,
   buttonSecondary,
   card,
   errorText,
@@ -22,7 +30,14 @@ import {
   screen,
   subheading,
   successText,
+  warningText,
 } from '../ui';
+
+// Großzügig genug, dass eine normale Pause (kein Bewegungs-Trigger für den
+// distanceFilter) keine Warnung auslöst, aber eng genug, um eine nur "bei
+// Nutzung" erteilte Standortberechtigung zu erkennen, die Hintergrund-Pings
+// lautlos stoppen lässt, ohne dass ein Fehler auftritt.
+const BACKGROUND_PING_STALE_MS = 10 * 60 * 1000;
 
 interface TourScreenProps {
   onLoggedOut: () => void;
@@ -41,6 +56,10 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
   const [shareBusy, setShareBusy] = useState(false);
   const [shareError, setShareError] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
+  const [trackingStatus, setTrackingStatus] = useState<TrackingStatus>(getTrackingStatus());
+  const [confirmingEnd, setConfirmingEnd] = useState(false);
+
+  const isActive = tour !== null && tour !== 'loading' && tour.status === 'aktiv';
 
   useEffect(() => {
     getActiveTour()
@@ -52,6 +71,18 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
       })
       .catch(() => setError('Tour-Status konnte nicht geladen werden.'));
   }, []);
+
+  useEffect(() => {
+    if (!isActive || !Capacitor.isNativePlatform()) {
+      setTrackingStatus(getTrackingStatus());
+      return;
+    }
+    setTrackingStatus(getTrackingStatus());
+    const interval = setInterval(() => {
+      setTrackingStatus(getTrackingStatus());
+    }, 15_000);
+    return () => clearInterval(interval);
+  }, [isActive]);
 
   async function handleStartTour() {
     setError(null);
@@ -67,6 +98,7 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
 
   async function handleEndTour() {
     if (!tour || tour === 'loading') return;
+    setConfirmingEnd(false);
     setError(null);
     try {
       const ended = await endTour(tour.id);
@@ -140,12 +172,18 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
   if (tour === 'loading') {
     return (
       <div className={screen}>
-        <p>Lade …</p>
+        <Spinner />
       </div>
     );
   }
 
-  const isActive = tour !== null && tour.status === 'aktiv';
+  const isNative = Capacitor.isNativePlatform();
+  const trackingReferenceTime = trackingStatus.lastSentAt ?? trackingStatus.startedAt;
+  const isTrackingStale =
+    isActive &&
+    isNative &&
+    trackingReferenceTime !== null &&
+    Date.now() - trackingReferenceTime > BACKGROUND_PING_STALE_MS;
 
   return (
     <div className={screen}>
@@ -171,11 +209,28 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
             })}
             .
           </p>
-          <p className={hintText}>
-            {Capacitor.isNativePlatform()
-              ? 'Standort wird automatisch im Hintergrund gesendet, solange die Tour läuft.'
-              : 'Standort wird nicht automatisch im Hintergrund gesendet. Sende regelmäßig, wenn du Netz hast, damit dein letzter bekannter Standort aktuell bleibt.'}
-          </p>
+          {isNative ? (
+            <>
+              <p className={hintText}>
+                {trackingStatus.lastSentAt
+                  ? `Letzter automatischer Standort: ${formatRelativeTime(
+                      new Date(trackingStatus.lastSentAt).toISOString(),
+                    )}.`
+                  : 'Noch kein automatischer Standort im Hintergrund gesendet.'}
+              </p>
+              {isTrackingStale && (
+                <p className={warningText}>
+                  Seit über 10 Minuten kein automatischer Standort gesendet. Prüfe, ob die
+                  Standortberechtigung auf „Immer erlauben“ steht und ob du Empfang hast.
+                </p>
+              )}
+            </>
+          ) : (
+            <p className={hintText}>
+              Standort wird nicht automatisch im Hintergrund gesendet. Sende regelmäßig, wenn du
+              Netz hast, damit dein letzter bekannter Standort aktuell bleibt.
+            </p>
+          )}
           <button
             className={button}
             onClick={handleSendPing}
@@ -190,9 +245,26 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
             </p>
           )}
           {pingStatus.state === 'error' && <p className={errorText}>{pingStatus.message}</p>}
-          <button className={buttonSecondary} onClick={handleEndTour}>
-            Tour beenden
-          </button>
+          {confirmingEnd ? (
+            <div className={card}>
+              <p>
+                Tour wirklich beenden? Die Bergwacht kann deinen Standort danach nicht mehr
+                nachschlagen.
+              </p>
+              <div className="flex gap-2">
+                <button className={buttonDanger} onClick={handleEndTour}>
+                  Ja, Tour beenden
+                </button>
+                <button className={buttonSecondary} onClick={() => setConfirmingEnd(false)}>
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button className={buttonSecondary} onClick={() => setConfirmingEnd(true)}>
+              Tour beenden
+            </button>
+          )}
         </>
       )}
 

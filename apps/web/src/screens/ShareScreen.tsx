@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getSharedTour, type SharedTour } from '../api/client';
 import ShareMap from '../components/ShareMap';
+import Spinner from '../components/Spinner';
 import { formatRelativeTime } from '../relativeTime';
 import { errorText, heading, hintText, screen, subheading } from '../ui';
 
@@ -20,7 +21,7 @@ function ShareScreen({ token }: ShareScreenProps) {
   if (tour === 'loading') {
     return (
       <div className={screen}>
-        <p>Lade …</p>
+        <Spinner />
       </div>
     );
   }
