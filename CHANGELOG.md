@@ -2,6 +2,13 @@
 
 Fortlaufendes Protokoll der umgesetzten Schritte – chronologisch, wird nur ergänzt, nicht überschrieben. Für den aktuellen Ist-Zustand siehe [CLAUDE.md](CLAUDE.md), für Architekturentscheidungen samt Begründung siehe [docs/adr/](docs/adr/).
 
+## 2026-10-14
+
+- UX-Feedback aus erstem Feldtest der nativen App behoben: `backgroundTracking.ts` sendete Pings bisher ausschließlich bewegungsausgelöst (`distanceFilter`) – bei einer Rast blieb der Standort beliebig lange unverändert. Neuer zeitbasierter Heartbeat sendet jetzt auch im Stillstand spätestens alle 5 Minuten den zuletzt bekannten Standort
+- `TourScreen.tsx`: manuell gesendeter und automatisch gesendeter Standort wurden bisher in zwei getrennten, inkonsistent aktualisierten UI-Zuständen angezeigt (`pingStatus` vs. `trackingStatus.lastSentAt`) – zu einer einzigen "Letzter Standort gesendet"-Anzeige zusammengeführt, inkl. Countdown-Hinweis, wann der nächste automatische Standort spätestens kommt
+- Neuer blinkender "Live"-Indikator (`components/LiveIndicator.tsx`) während aktivem Hintergrund-Tracking, damit sichtbar ist, dass der Standort gerade geteilt wird
+- Wording beim Tour-beenden-Dialog korrigiert: vorher implizierte der Text, die Bergwacht könne nach Tourende gar nicht mehr nachschlagen – tatsächlich bleibt der bisherige Verlauf bis zur automatischen Löschung (ADR 0008) einsehbar, nur die laufende Übermittlung endet
+
 ## 2026-10-13
 
 - Vorbereitung für den geplanten Feldtest auf dem neuen IONOS-Server (siehe Eintrag vom 2026-10-08): `apps/dashboard/vite.config.ts`-Proxy-Ziel auf Nutzerwunsch über `VITE_API_PROXY_TARGET` konfigurierbar gemacht (Default weiterhin `localhost:3000`) statt eines Wegwerf-Edits, da gegen den Server getestetes Dashboard ein wiederkehrender Bedarf ist – neues `apps/dashboard/.env.example` dokumentiert die Variable, analog zum bestehenden Muster in `apps/web/.env.example`

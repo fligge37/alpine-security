@@ -11,13 +11,15 @@ import {
 } from '../api/client';
 import {
   getTrackingStatus,
+  HEARTBEAT_INTERVAL_MS,
   startBackgroundTracking,
   stopBackgroundTracking,
   type TrackingStatus,
 } from '../backgroundTracking';
+import LiveIndicator from '../components/LiveIndicator';
 import Spinner from '../components/Spinner';
 import { getCurrentPosition } from '../geolocation';
-import { formatRelativeTime } from '../relativeTime';
+import { formatCountdown, formatRelativeTime } from '../relativeTime';
 import {
   button,
   buttonDanger,
@@ -29,15 +31,15 @@ import {
   input,
   screen,
   subheading,
-  successText,
   warningText,
 } from '../ui';
 
-// Großzügig genug, dass eine normale Pause (kein Bewegungs-Trigger für den
-// distanceFilter) keine Warnung auslöst, aber eng genug, um eine nur "bei
-// Nutzung" erteilte Standortberechtigung zu erkennen, die Hintergrund-Pings
-// lautlos stoppen lässt, ohne dass ein Fehler auftritt.
-const BACKGROUND_PING_STALE_MS = 10 * 60 * 1000;
+// Puffer über dem Heartbeat-Intervall, damit eine normale Pause keine Warnung
+// auslöst, aber eng genug, um eine nur "bei Nutzung" erteilte
+// Standortberechtigung zu erkennen, die Hintergrund-Pings lautlos stoppen
+// lässt, ohne dass ein Fehler auftritt.
+const BACKGROUND_PING_STALE_MS = HEARTBEAT_INTERVAL_MS + 2 * 60 * 1000;
+const BACKGROUND_PING_STALE_MINUTES = Math.round(BACKGROUND_PING_STALE_MS / 60_000);
 
 interface TourScreenProps {
   onLoggedOut: () => void;
@@ -73,10 +75,13 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
   }, []);
 
   useEffect(() => {
-    if (!isActive || !Capacitor.isNativePlatform()) {
+    if (!isActive) {
       setTrackingStatus(getTrackingStatus());
       return;
     }
+    // Läuft unabhängig von der Plattform, damit die relative Zeitangabe
+    // ("vor X Min.") auch im Browser-Fallback ohne automatisches Tracking
+    // regelmäßig neu gerendert wird.
     setTrackingStatus(getTrackingStatus());
     const interval = setInterval(() => {
       setTrackingStatus(getTrackingStatus());
@@ -185,6 +190,12 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
     trackingReferenceTime !== null &&
     Date.now() - trackingReferenceTime > BACKGROUND_PING_STALE_MS;
 
+  const manualSentAt = pingStatus.state === 'sent' ? pingStatus.at.getTime() : null;
+  const lastSentAt =
+    manualSentAt !== null && trackingStatus.lastSentAt !== null
+      ? Math.max(manualSentAt, trackingStatus.lastSentAt)
+      : manualSentAt ?? trackingStatus.lastSentAt;
+
   return (
     <div className={screen}>
       <h1 className={heading}>Tour</h1>
@@ -209,26 +220,26 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
             })}
             .
           </p>
-          {isNative ? (
-            <>
-              <p className={hintText}>
-                {trackingStatus.lastSentAt
-                  ? `Letzter automatischer Standort: ${formatRelativeTime(
-                      new Date(trackingStatus.lastSentAt).toISOString(),
-                    )}.`
-                  : 'Noch kein automatischer Standort im Hintergrund gesendet.'}
-              </p>
-              {isTrackingStale && (
-                <p className={warningText}>
-                  Seit über 10 Minuten kein automatischer Standort gesendet. Prüfe, ob die
-                  Standortberechtigung auf „Immer erlauben“ steht und ob du Empfang hast.
-                </p>
-              )}
-            </>
-          ) : (
+          {isNative && <LiveIndicator />}
+          <p className={hintText}>
+            {lastSentAt
+              ? `Letzter Standort gesendet: ${formatRelativeTime(new Date(lastSentAt).toISOString())}.`
+              : 'Noch kein Standort gesendet.'}
+            {isNative &&
+              trackingStatus.nextExpectedAt &&
+              ` Nächster automatischer Standort ${formatCountdown(trackingStatus.nextExpectedAt)}.`}
+          </p>
+          {!isNative && (
             <p className={hintText}>
               Standort wird nicht automatisch im Hintergrund gesendet. Sende regelmäßig, wenn du
               Netz hast, damit dein letzter bekannter Standort aktuell bleibt.
+            </p>
+          )}
+          {isTrackingStale && (
+            <p className={warningText}>
+              Seit über {BACKGROUND_PING_STALE_MINUTES} Minuten kein automatischer Standort
+              gesendet. Prüfe, ob die Standortberechtigung auf „Immer erlauben“ steht und ob du
+              Empfang hast.
             </p>
           )}
           <button
@@ -238,18 +249,13 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
           >
             {pingStatus.state === 'sending' ? 'Sende Standort …' : 'Standort jetzt senden'}
           </button>
-          {pingStatus.state === 'sent' && (
-            <p className={successText}>
-              Standort gesendet um{' '}
-              {pingStatus.at.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}.
-            </p>
-          )}
           {pingStatus.state === 'error' && <p className={errorText}>{pingStatus.message}</p>}
           {confirmingEnd ? (
             <div className={card}>
               <p>
-                Tour wirklich beenden? Die Bergwacht kann deinen Standort danach nicht mehr
-                nachschlagen.
+                Tour wirklich beenden? Dein Standort wird danach nicht mehr aktualisiert – die
+                Bergwacht kann den bisherigen Verlauf weiterhin einsehen, bis er automatisch
+                gelöscht wird.
               </p>
               <div className="flex gap-2">
                 <button className={buttonDanger} onClick={handleEndTour}>

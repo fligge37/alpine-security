@@ -11,3 +11,9 @@ export function formatRelativeTime(isoTimestamp: string): string {
   const diffDays = Math.round(diffHours / 24);
   return `vor ${diffDays} Tag${diffDays === 1 ? '' : 'en'}`;
 }
+
+export function formatCountdown(targetTimestampMs: number): string {
+  const diffMinutes = Math.ceil((targetTimestampMs - Date.now()) / 60_000);
+  if (diffMinutes <= 0) return 'jederzeit';
+  return `spätestens in ${diffMinutes} Min.`;
+}

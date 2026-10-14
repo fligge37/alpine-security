@@ -9,7 +9,13 @@ const BackgroundGeolocation = registerPlugin<BackgroundGeolocationPlugin>('Backg
 
 const QUEUE_KEY = 'alpine-security:ping-queue';
 const QUEUE_MAX_SIZE = 50;
+// Throttle für bewegungsausgelöste Pings (distanceFilter-Callback des Plugins).
 const MIN_PING_INTERVAL_MS = 2 * 60 * 1000;
+// Zeitbasierte Untergrenze: sendet auch ohne Bewegung (z.B. während einer Rast)
+// spätestens alle 5 Minuten den zuletzt bekannten Standort, da das Plugin sonst
+// bei Stillstand gar keinen Callback auslöst.
+export const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+const HEARTBEAT_CHECK_INTERVAL_MS = 30 * 1000;
 
 interface QueuedPing {
   latitude: number;
@@ -22,15 +28,24 @@ let watcherId: string | null = null;
 let activeTourId: string | null = null;
 let lastSentAt: number | null = null;
 let watcherStartedAt: number | null = null;
+let lastKnownLocation: Location | null = null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 export interface TrackingStatus {
   active: boolean;
   startedAt: number | null;
   lastSentAt: number | null;
+  nextExpectedAt: number | null;
 }
 
 export function getTrackingStatus(): TrackingStatus {
-  return { active: watcherId !== null, startedAt: watcherStartedAt, lastSentAt };
+  const referenceTime = lastSentAt ?? watcherStartedAt;
+  return {
+    active: watcherId !== null,
+    startedAt: watcherStartedAt,
+    lastSentAt,
+    nextExpectedAt: referenceTime !== null ? referenceTime + HEARTBEAT_INTERVAL_MS : null,
+  };
 }
 
 function readQueue(): QueuedPing[] {
@@ -69,7 +84,21 @@ async function flushQueue(tourId: string): Promise<void> {
   }
 }
 
+async function trySend(tourId: string, ping: QueuedPing): Promise<void> {
+  try {
+    await sendPing(tourId, {
+      latitude: ping.latitude,
+      longitude: ping.longitude,
+      accuracyMeters: ping.accuracyMeters ?? undefined,
+    });
+    lastSentAt = Date.now();
+  } catch {
+    enqueue(ping);
+  }
+}
+
 async function handleLocation(tourId: string, location: Location): Promise<void> {
+  lastKnownLocation = location;
   await flushQueue(tourId);
 
   const now = Date.now();
@@ -77,23 +106,31 @@ async function handleLocation(tourId: string, location: Location): Promise<void>
     return;
   }
 
-  const ping: QueuedPing = {
+  await trySend(tourId, {
     latitude: location.latitude,
     longitude: location.longitude,
     accuracyMeters: location.accuracy,
     recordedAt: new Date(location.time ?? now).toISOString(),
-  };
+  });
+}
 
-  try {
-    await sendPing(tourId, {
-      latitude: ping.latitude,
-      longitude: ping.longitude,
-      accuracyMeters: ping.accuracyMeters ?? undefined,
-    });
-    lastSentAt = now;
-  } catch {
-    enqueue(ping);
+async function sendHeartbeatIfDue(tourId: string): Promise<void> {
+  if (!lastKnownLocation) {
+    return;
   }
+
+  const now = Date.now();
+  if (lastSentAt !== null && now - lastSentAt < HEARTBEAT_INTERVAL_MS) {
+    return;
+  }
+
+  await flushQueue(tourId);
+  await trySend(tourId, {
+    latitude: lastKnownLocation.latitude,
+    longitude: lastKnownLocation.longitude,
+    accuracyMeters: lastKnownLocation.accuracy,
+    recordedAt: new Date(now).toISOString(),
+  });
 }
 
 export async function startBackgroundTracking(tourId: string): Promise<void> {
@@ -109,6 +146,7 @@ export async function startBackgroundTracking(tourId: string): Promise<void> {
 
   activeTourId = tourId;
   lastSentAt = null;
+  lastKnownLocation = null;
   watcherStartedAt = Date.now();
 
   watcherId = await BackgroundGeolocation.addWatcher(
@@ -125,9 +163,17 @@ export async function startBackgroundTracking(tourId: string): Promise<void> {
       void handleLocation(tourId, location);
     },
   );
+
+  heartbeatTimer = setInterval(() => {
+    void sendHeartbeatIfDue(tourId);
+  }, HEARTBEAT_CHECK_INTERVAL_MS);
 }
 
 export async function stopBackgroundTracking(): Promise<void> {
+  if (heartbeatTimer !== null) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   if (!Capacitor.isNativePlatform() || watcherId === null) {
     return;
   }
@@ -135,5 +181,6 @@ export async function stopBackgroundTracking(): Promise<void> {
   watcherId = null;
   activeTourId = null;
   lastSentAt = null;
+  lastKnownLocation = null;
   watcherStartedAt = null;
 }
