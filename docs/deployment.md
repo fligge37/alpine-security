@@ -96,7 +96,7 @@ folgenden Schritte ebenfalls als `deploy` laufen.)
 `deploy/.env` **auf dem Server** anlegen (liegt nicht im Repo, wird vom Deploy-Workflow nie überschrieben):
 
 ```
-POSTGRES_PASSWORD=<mit z.B. openssl rand -base64 32 erzeugen>
+POSTGRES_PASSWORD=<mit openssl rand -hex 32 erzeugen - nicht -base64, siehe deploy/.env.example>
 JWT_SECRET=<mit z.B. openssl rand -base64 32 erzeugen>
 IMAGE_TAG=latest
 ```

@@ -84,6 +84,14 @@ pnpm --filter @alpine-security/api exec tsx --env-file=.env \
 
 Existiert nur in der lokalen Dev-Datenbank; nach einem `docker compose down -v`/DB-Reset muss der Befehl erneut ausgeführt werden (E-Mail ist `UNIQUE`, ein zweiter Aufruf mit derselben Adresse schlägt sonst fehl).
 
+Denselben Account auf dem Produktions-Server anlegen (siehe [docs/deployment.md](docs/deployment.md)): das Runtime-Image enthält laut `apps/api/Dockerfile` nur `dist/` + Prod-Dependencies, kein `tsx`/`pnpm` – daher dort direkt mit `node` gegen die kompilierte `.js`-Datei im laufenden `api`-Container, `DATABASE_URL`/`JWT_SECRET` sind darin schon über `deploy/.env` gesetzt:
+
+```bash
+ssh deploy@<ionos-hostname-oder-ip>
+cd /opt/alpine-security/deploy
+docker compose exec api node dist/scripts/create-rescue-member.js <email> <passwort> "<anzeigename>"
+```
+
 ## Tests
 
 `apps/api` hat einen Integrationstest-Suite (Vitest + Fastifys `.inject()`, kein echter Netzwerk-Port nötig), die gegen die echte Postgres+PostGIS-Instanz läuft – Mocken der DB würde bei PostGIS-Geometrie und Constraints wenig bringen. Voraussetzung: Datenbank läuft und ist migriert (`pnpm db:up && pnpm db:migrate`).
