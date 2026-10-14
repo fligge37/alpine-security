@@ -32,6 +32,10 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
   const [holdBusyId, setHoldBusyId] = useState<string | null>(null);
   const [selectedTourId, setSelectedTourId] = useState<string | null>(null);
   const [hoverMs, setHoverMs] = useState<number | null>(null);
+  // Anzahl der jeweils anderen (nicht gerade angezeigten) Tab-Status, nur fürs Badge am
+  // Tab-Button – die Liste des aktuell angezeigten Status liefert ihre Anzahl selbst über
+  // tours.length, ein zweiter Request wäre da redundant.
+  const [otherStatusCount, setOtherStatusCount] = useState<number | null>(null);
 
   // Erneuter Klick auf dieselbe Tour (Liste oder Marker) hebt die Auswahl wieder auf; eine neue
   // Auswahl setzt den Zeitstrahl zurück auf "jetzt" (kompletter bisheriger Verlauf).
@@ -71,9 +75,22 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
       });
   }
 
+  function loadOtherStatusCount(currentStatus: TourStatus) {
+    const otherStatus: TourStatus = currentStatus === 'aktiv' ? 'beendet' : 'aktiv';
+    getTours(otherStatus)
+      .then((t) => setOtherStatusCount(t.length))
+      .catch(() => setOtherStatusCount(null));
+  }
+
   useEffect(() => {
     loadTours(status);
+    loadOtherStatusCount(status);
   }, [status]);
+
+  const aktivCount =
+    status === 'aktiv' ? (tours === 'loading' ? null : tours.length) : otherStatusCount;
+  const beendetCount =
+    status === 'beendet' ? (tours === 'loading' ? null : tours.length) : otherStatusCount;
 
   return (
     <div className="flex min-h-screen flex-col gap-4 p-8">
@@ -92,19 +109,45 @@ function ToursScreen({ onLoggedOut }: ToursScreenProps) {
         </div>
 
         <div className="flex gap-2">
+          <div className="relative">
+            <button
+              className={status === 'aktiv' ? button : buttonSecondary}
+              onClick={() => {
+                setOtherStatusCount(null);
+                setStatus('aktiv');
+              }}
+            >
+              Aktiv
+            </button>
+            {aktivCount !== null && aktivCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white">
+                {aktivCount}
+              </span>
+            )}
+          </div>
+          <div className="relative">
+            <button
+              className={status === 'beendet' ? button : buttonSecondary}
+              onClick={() => {
+                setOtherStatusCount(null);
+                setStatus('beendet');
+              }}
+            >
+              Beendet
+            </button>
+            {beendetCount !== null && beendetCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-600 px-1 text-xs font-semibold text-white">
+                {beendetCount}
+              </span>
+            )}
+          </div>
           <button
-            className={status === 'aktiv' ? button : buttonSecondary}
-            onClick={() => setStatus('aktiv')}
+            className={buttonSecondary}
+            onClick={() => {
+              loadTours(status);
+              loadOtherStatusCount(status);
+            }}
           >
-            Aktiv
-          </button>
-          <button
-            className={status === 'beendet' ? button : buttonSecondary}
-            onClick={() => setStatus('beendet')}
-          >
-            Beendet
-          </button>
-          <button className={buttonSecondary} onClick={() => loadTours(status)}>
             Aktualisieren
           </button>
         </div>

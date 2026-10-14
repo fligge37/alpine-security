@@ -194,7 +194,7 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
   const lastSentAt =
     manualSentAt !== null && trackingStatus.lastSentAt !== null
       ? Math.max(manualSentAt, trackingStatus.lastSentAt)
-      : manualSentAt ?? trackingStatus.lastSentAt;
+      : (manualSentAt ?? trackingStatus.lastSentAt);
 
   return (
     <div className={screen}>
