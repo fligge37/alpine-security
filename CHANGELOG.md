@@ -2,6 +2,10 @@
 
 Fortlaufendes Protokoll der umgesetzten Schritte – chronologisch, wird nur ergänzt, nicht überschrieben. Für den aktuellen Ist-Zustand siehe [CLAUDE.md](CLAUDE.md), für Architekturentscheidungen samt Begründung siehe [docs/adr/](docs/adr/).
 
+## 2026-10-15
+
+- `ToursMap` (Bergwacht-Dashboard) auf Nutzerwunsch an Komoot angelehnt überarbeitet: Standardansicht ist jetzt eine flache 2D-Draufsicht (bisher immer um 60° gekippt mit 3D-Terrain) – einfacher per Drag zu verschieben/zu navigieren. Neuer Ansichts-Umschalter oben links mit drei Modi: Karte (2D, Standard), Gelände (die bisherige gekippte 3D-Terrain-Ansicht) und neu Satellit (MapTiler Satellite, braucht `VITE_MAPTILER_KEY` in `apps/dashboard/.env` – ohne Key bleibt der Button deaktiviert, siehe `.env.example`). Satellit nutzt dafür einen echten MapTiler-Anbieter statt des keyless EOX-Anbieters, dessen aktuellere Bilder laut früherer Prüfung nicht kommerziell lizenziert sind (siehe CLAUDE.md „Offene Punkte"). Technisch: nur der Satellit-Modus wechselt den kompletten MapLibre-Stil (`map.setStyle`), Karte/Gelände teilen sich weiter den Vektor-Stil und unterscheiden sich nur in Kamera-Pitch/Terrain-Überhöhung; ein `style.load`-Handler baut die eigenen Layer (Terrain, Touren-Tracks, Zeitstrahl-Track) nach jedem Stil-Wechsel neu auf, da `setStyle` sie sonst verwirft
+
 ## 2026-10-14
 
 - UX-Feedback aus erstem Feldtest der nativen App behoben: `backgroundTracking.ts` sendete Pings bisher ausschließlich bewegungsausgelöst (`distanceFilter`) – bei einer Rast blieb der Standort beliebig lange unverändert. Neuer zeitbasierter Heartbeat sendet jetzt auch im Stillstand spätestens alle 5 Minuten den zuletzt bekannten Standort
