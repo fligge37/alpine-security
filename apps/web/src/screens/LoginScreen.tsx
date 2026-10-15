@@ -78,7 +78,7 @@ function LoginScreen({ onLoggedIn }: LoginScreenProps) {
           onChange={(e) => setPhoneNumber(e.target.value)}
           required
         />
-        
+
         <p className={hintText}>
           Wir benötigen deine Handynummer um dich im Ernstfall erreichen zu können.
         </p>

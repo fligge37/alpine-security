@@ -200,10 +200,10 @@ function TourScreen({ onLoggedOut }: TourScreenProps) {
     <div className={screen}>
       <h1 className={heading}>Tour</h1>
       <p className={hintText}>
-        Solange deine Tour läuft, kann die Bergwacht deinen letzten
-        Standort einsehen – auch automatisch im Hintergrund bei geschlossener App – und Angehörige mit
-        deinem Link sehen ihn ebenfalls. Aktiv wird die Bergwacht damit nicht automatisch, sondern
-        nur im Vermisstenfall oder um örtliche Gegebenheiten abzuklären.
+        Solange deine Tour läuft, kann die Bergwacht deinen letzten Standort einsehen – auch
+        automatisch im Hintergrund bei geschlossener App – und Angehörige mit deinem Link sehen ihn
+        ebenfalls. Aktiv wird die Bergwacht damit nicht automatisch, sondern nur im Vermisstenfall
+        oder um örtliche Gegebenheiten abzuklären.
       </p>
       {error && <p className={errorText}>{error}</p>}
 
