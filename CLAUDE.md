@@ -33,9 +33,8 @@ pnpm-Workspace-Monorepo, TypeScript durchgängig.
 ## Offene Punkte
 
 - Deployment läuft aktuell provisorisch ohne eigene Domain: nur `apps/api` ist über den von IONOS automatisch vergebenen Hostnamen öffentlich erreichbar, `apps/dashboard`/`apps/web` sind nicht deployed (siehe ADR 0009, Update vom 2026-10-13, und [docs/deployment.md](docs/deployment.md)). Umstellung auf die eigentlich vorgesehenen drei Subdomains folgt, sobald eine Domain gekauft ist.
-- SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, siehe ADR 0005)
+- SMS-Versand ist ein Log-Stub, kein echter Provider (Twilio/Vonage noch offen, bewusst noch nicht entschieden, siehe ADR 0005); Rate-Limiting für `POST /auth/request-otp` (max. 3/Nummer und 5/IP pro 10 Minuten, `apps/api/src/otpRateLimit.ts`) ist dagegen schon umgesetzt, unabhängig von der Provider-Wahl
 - `GET /rescue/tours` filtert noch nicht nach `region` (nur eine Region im MVP, siehe ADR 0003)
-- Kein Rate-Limiting/Missbrauchsschutz für den OTP-Versand (siehe ADR 0005)
 - Löschfrist für Standortverlauf (ADR 0008) ist als Script implementiert, aber noch nicht per Cron auf dem Server eingeplant – der Infra-Baustein dafür (ADR 0009) existiert jetzt, die eigentliche Cron-Einplanung ist aber noch offen
 - Keine Backup-Strategie für die Produktions-Datenbank (self-hosted Postgres ohne Managed-Backups, siehe ADR 0009 „Offene Fragen")
 - Teilbarer Tour-Link für Angehörige (ADR 0006) ist implementiert, aber auf ein Link pro Tour begrenzt (MVP) – mehrere einzeln widerrufbare Links pro Empfänger sind eine mögliche spätere Erweiterung, kein aktueller Scope

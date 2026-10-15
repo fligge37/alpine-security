@@ -4,7 +4,7 @@ import { eq } from 'drizzle-orm';
 import { buildApp } from '../src/app.js';
 import { db } from '../src/db/client.js';
 import { otpCode } from '../src/db/schema.js';
-import { decodeJwtPayload, randomPhoneNumber, registerUser } from './helpers.js';
+import { decodeJwtPayload, randomIp, randomPhoneNumber, registerUser } from './helpers.js';
 
 describe('auth: OTP-Flow', () => {
   let app: FastifyInstance;
@@ -39,7 +39,12 @@ describe('auth: OTP-Flow', () => {
 
   it('lehnt einen falschen Code ab (401)', async () => {
     const phoneNumber = randomPhoneNumber();
-    await app.inject({ method: 'POST', url: '/auth/request-otp', payload: { phoneNumber } });
+    await app.inject({
+      method: 'POST',
+      url: '/auth/request-otp',
+      payload: { phoneNumber },
+      remoteAddress: randomIp(),
+    });
 
     const res = await app.inject({
       method: 'POST',
@@ -52,7 +57,12 @@ describe('auth: OTP-Flow', () => {
 
   it('lehnt einen bereits verbrauchten Code beim zweiten Versuch ab (401)', async () => {
     const phoneNumber = randomPhoneNumber();
-    await app.inject({ method: 'POST', url: '/auth/request-otp', payload: { phoneNumber } });
+    await app.inject({
+      method: 'POST',
+      url: '/auth/request-otp',
+      payload: { phoneNumber },
+      remoteAddress: randomIp(),
+    });
     const [row] = await db
       .select()
       .from(otpCode)
@@ -69,7 +79,12 @@ describe('auth: OTP-Flow', () => {
 
   it('lehnt einen abgelaufenen Code ab (401)', async () => {
     const phoneNumber = randomPhoneNumber();
-    await app.inject({ method: 'POST', url: '/auth/request-otp', payload: { phoneNumber } });
+    await app.inject({
+      method: 'POST',
+      url: '/auth/request-otp',
+      payload: { phoneNumber },
+      remoteAddress: randomIp(),
+    });
 
     await db
       .update(otpCode)
@@ -89,5 +104,55 @@ describe('auth: OTP-Flow', () => {
     });
 
     expect(res.statusCode).toBe(401);
+  });
+
+  it('blockt die vierte request-otp-Anfrage für dieselbe Nummer innerhalb des Zeitfensters (429)', async () => {
+    const phoneNumber = randomPhoneNumber();
+
+    // 3 Anfragen sind erlaubt (von unterschiedlichen IPs, damit nur der
+    // Nummer-Grenzwert geprüft wird, nicht der IP-Grenzwert).
+    for (let i = 0; i < 3; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/request-otp',
+        payload: { phoneNumber },
+        remoteAddress: randomIp(),
+      });
+      expect(res.statusCode).toBe(202);
+    }
+
+    const blocked = await app.inject({
+      method: 'POST',
+      url: '/auth/request-otp',
+      payload: { phoneNumber },
+      remoteAddress: randomIp(),
+    });
+
+    expect(blocked.statusCode).toBe(429);
+  });
+
+  it('blockt die sechste request-otp-Anfrage von derselben IP innerhalb des Zeitfensters (429)', async () => {
+    const ip = randomIp();
+
+    // 5 Anfragen sind erlaubt (mit unterschiedlichen Nummern, damit nur der
+    // IP-Grenzwert geprüft wird, nicht der Nummer-Grenzwert).
+    for (let i = 0; i < 5; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/request-otp',
+        payload: { phoneNumber: randomPhoneNumber() },
+        remoteAddress: ip,
+      });
+      expect(res.statusCode).toBe(202);
+    }
+
+    const blocked = await app.inject({
+      method: 'POST',
+      url: '/auth/request-otp',
+      payload: { phoneNumber: randomPhoneNumber() },
+      remoteAddress: ip,
+    });
+
+    expect(blocked.statusCode).toBe(429);
   });
 });

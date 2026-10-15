@@ -4,6 +4,7 @@ import type { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox';
 import { and, desc, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { appUser, otpCode } from '../db/schema.js';
+import { isOtpRequestRateLimited } from '../otpRateLimit.js';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 
@@ -20,6 +21,11 @@ const VerifyOtpBody = Type.Object({
 const authRoutes: FastifyPluginAsyncTypebox = async (server) => {
   server.post('/auth/request-otp', { schema: { body: RequestOtpBody } }, async (request, reply) => {
     const { phoneNumber } = request.body;
+
+    if (isOtpRequestRateLimited(phoneNumber, request.ip)) {
+      return reply.code(429).send({ error: 'rate_limited' });
+    }
+
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
 
     await db.insert(otpCode).values({

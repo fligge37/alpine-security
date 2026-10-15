@@ -12,6 +12,10 @@ import shareRoutes from './routes/share.js';
 export async function buildApp(options?: { logger?: boolean }) {
   const server = Fastify({
     logger: options?.logger ?? true,
+    // Caddy sitzt als einziger Reverse Proxy davor (ADR 0009) - ohne das würde
+    // request.ip immer die Caddy-Container-IP liefern statt der echten Client-IP,
+    // was das Pro-IP-Rate-Limiting in auth.ts wirkungslos machen würde.
+    trustProxy: true,
   }).withTypeProvider<TypeBoxTypeProvider>();
 
   // Im Browser läuft der Vite-Dev-Proxy (same-origin, kein CORS nötig). Die

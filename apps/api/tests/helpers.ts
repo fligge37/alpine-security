@@ -17,6 +17,15 @@ export function randomEmail(): string {
   return `rescue-${randomUUID()}@example.com`;
 }
 
+// Jeder Fixture-Nutzer bekommt eine eigene simulierte Client-IP, damit das
+// Pro-IP-Rate-Limiting von request-otp (siehe otpRateLimit.ts) nicht durch die
+// vielen registerUser-Aufrufe in einer einzelnen Testdatei ausgelöst wird - in
+// echtem Betrieb kämen die ja auch von unterschiedlichen Geräten/IPs.
+export function randomIp(): string {
+  const octet = () => Math.floor(Math.random() * 255) + 1;
+  return `10.${octet()}.${octet()}.${octet()}`;
+}
+
 async function getLatestOtpCode(phoneNumber: string): Promise<string> {
   const [row] = await db
     .select()
@@ -46,7 +55,12 @@ export async function registerUser(
   app: FastifyInstance,
   phoneNumber: string = randomPhoneNumber(),
 ): Promise<{ token: string; phoneNumber: string; userId: string }> {
-  await app.inject({ method: 'POST', url: '/auth/request-otp', payload: { phoneNumber } });
+  await app.inject({
+    method: 'POST',
+    url: '/auth/request-otp',
+    payload: { phoneNumber },
+    remoteAddress: randomIp(),
+  });
   const code = await getLatestOtpCode(phoneNumber);
 
   const res = await app.inject({
