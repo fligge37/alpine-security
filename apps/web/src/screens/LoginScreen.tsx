@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { ApiError, requestOtp, verifyOtp } from '../api/client';
-import { button, buttonSecondary, errorText, heading, input, label, screen } from '../ui';
+import { button, buttonSecondary, errorText, heading, hintText, input, label, screen } from '../ui';
 
 interface LoginScreenProps {
   onLoggedIn: () => void;
@@ -10,6 +10,7 @@ interface LoginScreenProps {
 function LoginScreen({ onLoggedIn }: LoginScreenProps) {
   const [step, setStep] = useState<'phone' | 'code'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [code, setCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ function LoginScreen({ onLoggedIn }: LoginScreenProps) {
     setError(null);
     setIsSubmitting(true);
     try {
-      await verifyOtp(phoneNumber, code);
+      await verifyOtp(phoneNumber, code, displayName.trim());
       onLoggedIn();
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -50,6 +51,19 @@ function LoginScreen({ onLoggedIn }: LoginScreenProps) {
     return (
       <form className={screen} onSubmit={handleRequestOtp}>
         <h1 className={heading}>Anmelden</h1>
+        <label htmlFor="displayName" className={label}>
+          Name (optional)
+        </label>
+        <input
+          id="displayName"
+          className={input}
+          type="text"
+          autoComplete="name"
+          placeholder="Vor- und Nachname"
+          maxLength={100}
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+        />
         <label htmlFor="phone" className={label}>
           Handynummer
         </label>
@@ -64,6 +78,10 @@ function LoginScreen({ onLoggedIn }: LoginScreenProps) {
           onChange={(e) => setPhoneNumber(e.target.value)}
           required
         />
+        
+        <p className={hintText}>
+          Wir benötigen deine Handynummer um dich im Ernstfall erreichen zu können.
+        </p>
         {error && <p className={errorText}>{error}</p>}
         <button type="submit" className={button} disabled={isSubmitting}>
           {isSubmitting ? 'Sende Code …' : 'Code anfordern'}

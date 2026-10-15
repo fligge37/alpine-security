@@ -98,10 +98,14 @@ export async function requestOtp(phoneNumber: string): Promise<void> {
   await apiFetch('/auth/request-otp', { method: 'POST', body: { phoneNumber } });
 }
 
-export async function verifyOtp(phoneNumber: string, code: string): Promise<void> {
+export async function verifyOtp(
+  phoneNumber: string,
+  code: string,
+  displayName?: string,
+): Promise<void> {
   const { token } = await apiFetch<{ token: string }>('/auth/verify-otp', {
     method: 'POST',
-    body: { phoneNumber, code },
+    body: { phoneNumber, code, displayName: displayName || undefined },
   });
   setToken(token);
 }

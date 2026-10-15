@@ -14,6 +14,7 @@ const RequestOtpBody = Type.Object({
 const VerifyOtpBody = Type.Object({
   phoneNumber: Type.String({ minLength: 6, maxLength: 20 }),
   code: Type.String({ minLength: 6, maxLength: 6 }),
+  displayName: Type.Optional(Type.String({ maxLength: 100 })),
 });
 
 const authRoutes: FastifyPluginAsyncTypebox = async (server) => {
@@ -34,7 +35,7 @@ const authRoutes: FastifyPluginAsyncTypebox = async (server) => {
   });
 
   server.post('/auth/verify-otp', { schema: { body: VerifyOtpBody } }, async (request, reply) => {
-    const { phoneNumber, code } = request.body;
+    const { phoneNumber, code, displayName } = request.body;
 
     const [candidate] = await db
       .select()
@@ -62,10 +63,20 @@ const authRoutes: FastifyPluginAsyncTypebox = async (server) => {
       .where(eq(appUser.phoneNumber, phoneNumber))
       .limit(1);
 
+    // Name ist optional und wird nur beim erstmaligen Registrieren übernommen –
+    // bewusst keine Bearbeitung danach, um den Flow (und die API) schlank zu
+    // halten; der Name dient nur der Anzeige bei Bergwacht/Angehörigen.
     const user =
       existingUser ??
       (
-        await db.insert(appUser).values({ phoneNumber, phoneVerifiedAt: new Date() }).returning()
+        await db
+          .insert(appUser)
+          .values({
+            phoneNumber,
+            phoneVerifiedAt: new Date(),
+            displayName: displayName?.trim() || undefined,
+          })
+          .returning()
       )[0];
 
     if (!user) {
